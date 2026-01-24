@@ -15,6 +15,12 @@ repos:
       - id: check-added-large-files
       - id: check-json
       - id: check-merge-conflict
+  # JavaScript/TypeScript formatting
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.8.1
+    hooks:
+      - id: prettier
+        stages: [pre-commit]
   # Python formatting and linting
   - repo: https://github.com/psf/black
     rev: 26.1.0

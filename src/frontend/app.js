@@ -1,101 +1,111 @@
 // Configuration
-const API_ENDPOINT = '/api/submit';
+const API_ENDPOINT = "/api/submit";
 
 // DOM Elements
-const numberButtons = document.querySelectorAll('.number-btn');
-const submitBtn = document.getElementById('submit-btn');
-const messageDiv = document.getElementById('message');
-const selectedText = document.getElementById('selected-text');
-const selectedNumberSpan = document.getElementById('selected-number');
+const numberButtons = document.querySelectorAll(".number-btn");
+const submitBtn = document.getElementById("submit-btn");
+const messageDiv = document.getElementById("message");
+const selectedText = document.getElementById("selected-text");
+const selectedNumberSpan = document.getElementById("selected-number");
 
 // Initialize submit button as disabled
 submitBtn.disabled = true;
 
 // Event Listeners
-numberButtons.forEach(button => {
-    button.addEventListener('click', handleNumberSelect);
+numberButtons.forEach((button) => {
+  button.addEventListener("click", handleNumberSelect);
 });
 
-submitBtn.addEventListener('click', handleSubmit);
+submitBtn.addEventListener("click", handleSubmit);
 
 // Debug: log initial state
-console.log('Number buttons found:', numberButtons.length);
-console.log('Submit button found:', submitBtn !== null, 'Disabled state:', submitBtn.disabled);
+console.log("Number buttons found:", numberButtons.length);
+console.log(
+  "Submit button found:",
+  submitBtn !== null,
+  "Disabled state:",
+  submitBtn.disabled,
+);
 
 /**
  * Handle number selection
  * @param {Event} event - Click event from number button
  */
 function handleNumberSelect(event) {
-    // Remove previous selection
-    numberButtons.forEach(btn => btn.classList.remove('selected'));
+  // Remove previous selection
+  numberButtons.forEach((btn) => btn.classList.remove("selected"));
 
-    // Add selection to clicked button
-    event.target.classList.add('selected');
-    const selectedNumber = parseInt(event.target.dataset.number);
+  // Add selection to clicked button
+  event.target.classList.add("selected");
+  const selectedNumber = parseInt(event.target.dataset.number);
 
-    // Update UI
-    selectedNumberSpan.textContent = selectedNumber;
-    selectedText.style.display = 'block';
+  // Update UI
+  selectedNumberSpan.textContent = selectedNumber;
+  selectedText.style.display = "block";
 
-    // Enable submit button - ensure it's actually enabled
-    submitBtn.removeAttribute('disabled');
-    submitBtn.disabled = false;
+  // Enable submit button - ensure it's actually enabled
+  submitBtn.removeAttribute("disabled");
+  submitBtn.disabled = false;
 
-    console.log('Number selected:', selectedNumber, 'Submit button disabled:', submitBtn.disabled);
+  console.log(
+    "Number selected:",
+    selectedNumber,
+    "Submit button disabled:",
+    submitBtn.disabled,
+  );
 
-    // Clear message
-    clearMessage();
+  // Clear message
+  clearMessage();
 }
 
 /**
  * Handle form submission
  */
 async function handleSubmit() {
-    const selectedButton = document.querySelector('.number-btn.selected');
-    const selectedNumber = selectedButton ? parseInt(selectedButton.dataset.number) : null;
+  const selectedButton = document.querySelector(".number-btn.selected");
+  const selectedNumber = selectedButton
+    ? parseInt(selectedButton.dataset.number)
+    : null;
 
-    if (selectedNumber === null) {
-        showMessage('Please select a number', 'error');
-        return;
+  if (selectedNumber === null) {
+    showMessage("Please select a number", "error");
+    return;
+  }
+
+  try {
+    submitBtn.classList.add("loading");
+    submitBtn.disabled = true;
+    clearMessage();
+
+    const response = await fetch(API_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        number: selectedNumber,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    try {
-        submitBtn.classList.add('loading');
-        submitBtn.disabled = true;
-        clearMessage();
+    const data = await response.json();
+    showMessage(`Successfully submitted number: ${selectedNumber}`, "success");
 
-        const response = await fetch(API_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                number: selectedNumber,
-                timestamp: new Date().toISOString()
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        showMessage(`Successfully submitted number: ${selectedNumber}`, 'success');
-
-        // Reset selection after successful submission
-        setTimeout(() => {
-            resetSelection();
-        }, 2000);
-
-    } catch (error) {
-        console.error('Error submitting number:', error);
-        showMessage(`Error: ${error.message}. Please try again.`, 'error');
-        submitBtn.disabled = false;
-
-    } finally {
-        submitBtn.classList.remove('loading');
-    }
+    // Reset selection after successful submission
+    setTimeout(() => {
+      resetSelection();
+    }, 2000);
+  } catch (error) {
+    console.error("Error submitting number:", error);
+    showMessage(`Error: ${error.message}. Please try again.`, "error");
+    submitBtn.disabled = false;
+  } finally {
+    submitBtn.classList.remove("loading");
+  }
 }
 
 /**
@@ -104,28 +114,28 @@ async function handleSubmit() {
  * @param {string} type - Message type ('success' or 'error')
  */
 function showMessage(text, type) {
-    messageDiv.textContent = text;
-    messageDiv.className = `message ${type}`;
+  messageDiv.textContent = text;
+  messageDiv.className = `message ${type}`;
 }
 
 /**
  * Clear message display
  */
 function clearMessage() {
-    messageDiv.textContent = '';
-    messageDiv.className = 'message';
+  messageDiv.textContent = "";
+  messageDiv.className = "message";
 }
 
 /**
  * Reset the form to initial state
  */
 function resetSelection() {
-    numberButtons.forEach(btn => btn.classList.remove('selected'));
-    selectedText.style.display = 'none';
-    submitBtn.disabled = true;
-    clearMessage();
+  numberButtons.forEach((btn) => btn.classList.remove("selected"));
+  selectedText.style.display = "none";
+  submitBtn.disabled = true;
+  clearMessage();
 }
 
 // Initialize
-console.log('Pick a Number app loaded');
-console.log('API Endpoint:', API_ENDPOINT);
+console.log("Pick a Number app loaded");
+console.log("API Endpoint:", API_ENDPOINT);
