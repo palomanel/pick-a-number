@@ -47,6 +47,13 @@ history and enables automated changelog generation.
     under this scheme, version numbers and the way they change convey
     meaning about the underlying code and what has been modified from
     one version to the next.
+- Javascript
+  - Use vanilla Javascript only
+  - No `let` declarations, all data structures should be declared as `const`
+  - Use meaningful variable and function names
+  - Add docstrings to functions and classes
+  - Keep functions focused and modular
+  - Write comments for complex logic
 - Python
   - Follow PEP 8 for Python code
   - Use meaningful variable and function names
