@@ -59,6 +59,28 @@ function handleNumberSelect(event) {
 }
 
 /**
+ * Get geolocation coordinates from the browser
+ * @returns {Promise<Object>} Geolocation coordinates or error
+ */
+function getLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation is not supported by this browser"));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve(position.coords);
+      },
+      (error) => {
+        reject(new Error(`Geolocation error: ${error.message}`));
+      },
+    );
+  });
+}
+
+/**
  * Handle form submission
  */
 async function handleSubmit() {
@@ -72,6 +94,20 @@ async function handleSubmit() {
     return;
   }
 
+  const timestamp = new Date().toISOString();
+  const location = await getLocation().catch((error) => {
+    console.warn("Could not get location:", error);
+    return null;
+  });
+
+  const payload = JSON.stringify({
+    number: selectedNumber,
+    timestamp: timestamp,
+    location: location,
+  });
+
+  console.log("Submitting payload:", payload);
+
   try {
     submitBtn.classList.add("loading");
     submitBtn.disabled = true;
@@ -82,10 +118,7 @@ async function handleSubmit() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        number: selectedNumber,
-        timestamp: new Date().toISOString(),
-      }),
+      body: payload,
     });
 
     if (!response.ok) {
@@ -93,7 +126,6 @@ async function handleSubmit() {
     }
 
     const data = await response.json();
-    showMessage(`Successfully submitted number: ${selectedNumber}`, "success");
 
     // Reset selection after successful submission
     setTimeout(() => {
