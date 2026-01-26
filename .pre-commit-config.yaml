@@ -32,6 +32,14 @@ repos:
     rev: 3.2.497
     hooks:
       - id: checkov
+  # Cloudformation static analysis
+  # Currently disabled due as cnf-lint does not support Python 3.14
+  # PR underway https://github.com/aws/serverless-application-model/pull/3862
+  # - repo: https://github.com/aws-cloudformation/cfn-lint
+  #  rev: v1.43.4
+  #  hooks:
+  #    - id: cfn-lint
+  #      files: src/cloudfront/.*\.(json|yml|yaml)$
   # YAML validation
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.38.0
