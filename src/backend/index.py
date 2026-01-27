@@ -12,17 +12,6 @@ dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.environ["TABLE_NAME"])
 
 
-def convert_floats_to_decimals(obj):
-    """Recursively convert float values to Decimal for DynamoDB compatibility"""
-    if isinstance(obj, float):
-        return Decimal(str(obj))
-    elif isinstance(obj, dict):
-        return {k: convert_floats_to_decimals(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_floats_to_decimals(item) for item in obj]
-    return obj
-
-
 def handler(event, context):
     try:
         # Log the incoming event for debugging

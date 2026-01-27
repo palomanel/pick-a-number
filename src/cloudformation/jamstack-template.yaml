@@ -3,9 +3,14 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "JAMstack Application - S3, CloudFront, API Gateway, Lambda,
   DynamoDB"
 
+Parameters:
+  BudgetNotificationEmail:
+    Type: String
+    Description: Email address for AWS budget notifications
+    AllowedPattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    ConstraintDescription: Must be a valid email address
 # This is here as a placeholder for future domain name integration
 # Deactivated for now to silence warnings
-# Parameters:
 #   DomainName:
 #     Type: String
 #     Description: Domain name for the application
@@ -133,7 +138,7 @@ Resources:
       Code:
         ZipFile: |
           # Lambda code will be deployed separately
-          # See ../backend/lambda_function.py for the actual implementation
+          # See ../backend/index.py for the actual implementation
           import json
           def handler(event, context):
             return {
@@ -240,6 +245,27 @@ Resources:
         DefaultRootObject: index.html
         Enabled: true
         PriceClass: PriceClass_100
+
+  # AWS Budget for cost monitoring
+  ApplicationBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: !Sub "${AWS::StackName}-monthly-budget"
+        BudgetLimit:
+          Amount: "100"
+          Unit: USD
+        TimeUnit: MONTHLY
+        BudgetType: COST
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref BudgetNotificationEmail
 
 Outputs:
   CloudFrontURL:

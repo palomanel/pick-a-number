@@ -6,18 +6,20 @@
 
 set -e
 
-STACK_NAME="jamstack-app"
-REGION="eu-central-1"
 TEMPLATE_FILE="../cloudformation/jamstack-template.yaml"
 FRONTEND_DIR="frontend"
 BACKEND_DIR="backend"
+BUDGET_EMAIL="john_doe@example.com"
+STACK_NAME="jamstack-app"
+REGION="eu-central-1"
 
 echo "Deploying CloudFormation stack..."
 aws cloudformation deploy \
     --template-file "${TEMPLATE_FILE}" \
     --stack-name "${STACK_NAME}" \
     --capabilities CAPABILITY_IAM \
-    --region "${REGION}"
+    --region "${REGION}" \
+    --parameter-overrides BudgetNotificationEmail="${BUDGET_EMAIL}"
 
 echo "Getting S3 bucket name..."
 BUCKET_NAME=$(aws cloudformation describe-stacks \

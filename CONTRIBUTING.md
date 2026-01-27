@@ -63,12 +63,12 @@ Ensure you're using the [devcontainer](.devcontainer/devcontainer.json)
 or install the pre-commit hooks before making any commits.
 
 1. Create a feature branch: `git checkout -b feature/your-feature-name`
-2. Make your changes
-3. Write or update tests and documentation
-4. Run the test suite and pre-commit checks: `pytest && pre-commit run --all-files`
-5. Commit with clear messages following Conventional Commits
-6. Push to your fork
-7. Create a PR with a clear title and description and ensure CI is passing
+1. Make your changes
+1. Write or update tests and documentation
+1. Run the test suite and pre-commit checks: `pytest && pre-commit run --all-files`
+1. Commit with clear messages following Conventional Commits
+1. Push to your fork
+1. Create a PR with a clear title and description and ensure CI is passing
 
 ## Code of Conduct
 

@@ -22,18 +22,21 @@ This project contains the code for a basic
 All of the componenents are contained in this repo including:
 
 - **Frontend**, a one page web app
-- **Backend**, a data ingestion API endpoint
+- **Backend**, a data ingestion API endpoint and persistence layer
 - **Infrastructure-as-Code**, a CloudFormation template that creates the
-  necessary AWS infrastructure
+  necessary AWS infrastructure, including a Budget
 - **CI/CD and tooling**, a `devcontainer` configuration, local `pre-commit`
   hooks, and CI/CD workflows
 
 ## Usage
 
+1. Clone or fork the project
 1. Ensure AWS CLI is configured with appropriate permissions, if you're using
-   the [devcontainer](.devcontainer/devcontainer.json) the environment is ready
-   and you just need to `aws login`
-2. Run the deployment script:
+   the [devcontainer](.devcontainer/devcontainer.json) the environment is baked
+   for you and you just need to run `aws login` to get started
+1. Review `src/scripts/deploy.sh` and change the variable defaults to your
+   liking (i.e. `STACK_NAME`, `REGION`, `BUDGET_EMAIL`)
+1. Run the deployment script:
 
 ```bash
 cd src/scripts
@@ -43,8 +46,12 @@ cd src/scripts
 The deployment script will output the CloudFront distribution URL. Use this address
 on your web browser to open the web app.
 
-Upon opening the web app the user will be able to pick a number between 1 and 10.
-By clicking the "Submit" button a JSON payload will be posted to the API backend.
+Upon opening the web app users will be able to pick a number between 1 and 10.
+By clicking the "Submit" button a JSON payload will be posted to the API backend
+and stored in DynamoDB.
+
+The web browser will require authorization to access the user's location. This is
+optional.
 
 The JSON payload includes:
 
@@ -54,7 +61,7 @@ The JSON payload includes:
 
 Check out the [architecture](docs/ARCHITECTURE.md) and how to
 [contribute](CONTRIBUTING.md).
-When you're done don't forget to tear down the app to avoid unneeded costs.
+When you're done don't forget to tear down everything to avoid unneeded costs.
 
 ```bash
 cd src/scripts
