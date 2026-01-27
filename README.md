@@ -30,19 +30,41 @@ All of the componenents are contained in this repo including:
 
 ## Usage
 
-Upon opening the web app the user will be able to pick a number between 1 and 10.
-Upon clicking the "Submit" button a JSON payload will be posted to the API backend.
+1. Ensure AWS CLI is configured with appropriate permissions, if you're using
+   the [devcontainer](.devcontainer/devcontainer.json) the environment is ready
+   and you just need to `aws login`
+2. Run the deployment script:
 
-The JSON payload includes several pieces of information, namely
+```bash
+cd src/scripts
+./deploy.sh
+```
+
+The deployment script will output the CloudFront distribution URL. Use this address
+on your web browser to open the web app.
+
+Upon opening the web app the user will be able to pick a number between 1 and 10.
+By clicking the "Submit" button a JSON payload will be posted to the API backend.
+
+The JSON payload includes:
 
 - The number selected by the user
 - A timestamp in UTC format
 - The geo-location coordinates if the user authorizes
 
-For information on the architecture and deployment of the app refer to
-[CONTRIBUTING.md](CONTRIBUTING.md).
+Check out the [architecture](docs/ARCHITECTURE.md) and how to
+[contribute](CONTRIBUTING.md).
+When you're done don't forget to tear down the app to avoid unneeded costs.
+
+```bash
+cd src/scripts
+./destroy.sh
+```
 
 ## Support
 
-Feel free to open an issue or discussion if you have questions about
-contributing.
+Feel free to open an issue or start a discussion if you have a question or a
+feature request.
+However please keep in mind support for this project is provided on a
+**best effort** basis. The authors do not guarantee or warrant that
+its efforts will solve the issue or provide a specific result.
