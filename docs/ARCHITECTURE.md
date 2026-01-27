@@ -32,9 +32,10 @@ are accessible from the same domain using different URI patterns.
 ## Key Features
 
 - **Single Domain**: Unified access through CloudFront routing
-- **Serverless**: Minimal operational overhead for Multi-AZ deployment with AWS
-  managed services, and Pay-per-use pricing model
+- **Serverless**: Minimal operational overhead and Multi-AZ deployment with AWS
+  managed services
 - **Auto-scaling**: Handles traffic spikes automatically
 - **Global CDN**: CloudFront edge locations worldwide cache content close
   to the user and provide DDoS protection
 - **Reliability**: Multi-AZ deployment with AWS managed services
+- **FinOps optimized**: Pay-per-use pricing model and budget notifications

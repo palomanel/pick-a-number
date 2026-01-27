@@ -24,16 +24,19 @@ All of the componenents are contained in this repo including:
 - **Frontend**, a one page web app
 - **Backend**, a data ingestion API endpoint
 - **Infrastructure-as-Code**, a CloudFormation template that creates the
-  necessary AWS infrastructure
+  necessary AWS infrastructure, including a Budget
 - **CI/CD and tooling**, a `devcontainer` configuration, local `pre-commit`
   hooks, and CI/CD workflows
 
 ## Usage
 
+1. Clone or fork the project
 1. Ensure AWS CLI is configured with appropriate permissions, if you're using
-   the [devcontainer](.devcontainer/devcontainer.json) the environment is ready
-   and you just need to `aws login`
-2. Run the deployment script:
+   the [devcontainer](.devcontainer/devcontainer.json) the environment is baked
+   for you and you just need to run `aws login` to get started
+1. Review `src/scripts/deploy.sh` and changes the defaults to your liking
+   (i.e. `STACK_NAME`, `REGION`, `BUDGET_EMAIL`)
+1. Run the deployment script:
 
 ```bash
 cd src/scripts
