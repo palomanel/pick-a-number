@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pick a Number</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <h1>Pick a Number</h1>
+        <p class="subtitle">Choose a number between 1 and 10</p>
+
+        <div class="number-grid">
+          <button class="number-btn" data-number="1">1</button>
+          <button class="number-btn" data-number="2">2</button>
+          <button class="number-btn" data-number="3">3</button>
+          <button class="number-btn" data-number="4">4</button>
+          <button class="number-btn" data-number="5">5</button>
+          <button class="number-btn" data-number="6">6</button>
+          <button class="number-btn" data-number="7">7</button>
+          <button class="number-btn" data-number="8">8</button>
+          <button class="number-btn" data-number="9">9</button>
+          <button class="number-btn" data-number="10">10</button>
+        </div>
+
+        <div class="selected-info">
+          <p id="selected-text" style="display: none">
+            Selected: <span id="selected-number"></span>
+          </p>
+        </div>
+
+        <button id="submit-btn" class="submit-btn" disabled>Submit</button>
+
+        <div id="message" class="message"></div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -9,7 +9,7 @@ Follow these steps:
 
 1. Fork the repository and/or create a local clone
 2. Open the project in VS Code and select `Reopen in Container`
-3. Follow the development workflow to create and submit a PR
+3. Follow the guidance below to create and submit a PR
 
 ## Project Structure
 
@@ -21,25 +21,19 @@ Follow these steps:
 ├── docs/                   # Documentation
 ├── cloudformation/         # Infrastructure as Code
 ├── src/                    # Application source code
+│   └── backend/            # Application Backend
 │   └── cloudformation/     # Infrastructure as Code
 │   └── frontend/           # Application Frontend
-│   └── backend/            # Application Backend
+│   └── scripts/            # Utility scripts used for CI/CD and locally
 ├── tests/                  # Test suite
 ├── README.md               # Repository information
 ├── LICENSE                 # MIT License
-└── CONTRIBUTING.md         # Contribution guidelines
+└── CONTRIBUTING.md         # Contribution instructions
 ```
 
-## Conventional Commits Standard
+## Development guidelines
 
-This project adheres to the
-[Conventional Commits](https://www.conventionalcommits.org)
-standard for commit messages. This provides a clear structure to commit
-history and enables automated changelog generation.
-
-## Code Standards
-
-- Repository standards
+- Repository
   - Use [Conventional Commits](https://www.conventionalcommits.org),
     this provides a clear structure to commit
     history and enables automated changelog generation.
@@ -47,21 +41,21 @@ history and enables automated changelog generation.
     under this scheme, version numbers and the way they change convey
     meaning about the underlying code and what has been modified from
     one version to the next.
-- Python
-  - Follow PEP 8 for Python code
+- General development
   - Use meaningful variable and function names
   - Add docstrings to functions and classes
   - Keep functions focused and modular
   - Write comments for complex logic
-
-## Testing
-
-All code contributions should include tests:
-
-- Write unit tests for new functions
-- Update existing tests if behavior changes
-- Ensure test coverage remains adequate
-- Run tests locally before submitting
+- Javascript
+  - Use vanilla Javascript only
+  - No `let` declarations, all data structures should be declared as `const`
+- Python
+  - Follow PEP 8 for Python code
+- Testing
+  - Write unit tests for new functions
+  - Update existing tests if behavior changes
+  - Ensure test coverage remains adequate
+  - Run tests locally before submitting
 
 ## Submmiting a Pull Request
 
@@ -72,7 +66,7 @@ or install the pre-commit hooks before making any commits.
 2. Make your changes
 3. Write or update tests and documentation
 4. Run the test suite and pre-commit checks: `pytest && pre-commit run --all-files`
-5. Commit with clear messages following [Conventional Commits](#conventional-commits-standard)
+5. Commit with clear messages following Conventional Commits
 6. Push to your fork
 7. Create a PR with a clear title and description and ensure CI is passing
 
@@ -83,5 +77,8 @@ providing a welcoming environment for all contributors.
 
 ## Questions?
 
-Feel free to open an issue or discussion if you have questions about
-contributing.
+Feel free to open an issue or start a discussion if you have a question or a
+feature request.
+However please keep in mind support for this project is provided on a
+**best effort** basis. The authors do not guarantee or warrant that
+its efforts will solve the issue or provide a specific result.

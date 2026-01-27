@@ -1,0 +1,237 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "JAMstack Application - S3, CloudFront, API Gateway, Lambda,
+  DynamoDB"
+
+# This is here as a placeholder for future domain name integration
+# Deactivated for now to silence warnings
+# Parameters:
+#   DomainName:
+#     Type: String
+#     Description: Domain name for the application
+#     Default: example.com
+
+Resources:
+  # S3 Bucket for static content
+  StaticContentBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-static-content"
+      # TODO: Set the LoggingConfiguration
+      # TODO: Set the VersioningConfiguration
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # S3 Bucket Policy for CloudFront access
+  StaticContentBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref StaticContentBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource:
+              - !GetAtt StaticContentBucket.Arn
+              - !Sub "${StaticContentBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                "aws:SourceArn": !Sub "arn:${AWS::Partition}:cloudfront::\
+                  ${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+          - Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt StaticContentBucket.Arn
+              - !Sub "${StaticContentBucket.Arn}/*"
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+
+  # CloudFront Origin Access Control
+  OriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub "${AWS::StackName}-oac"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  # DynamoDB Table
+  DataTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName: !Sub "${AWS::StackName}-data"
+      SSESpecification:
+        SSEEnabled: true
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  # Lambda Execution Role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role\
+          /AWSLambdaBasicExecutionRole"
+        - !Ref DynamoDBAccessPolicy
+
+  # DynamoDB Access Policy
+  DynamoDBAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:PutItem
+              - dynamodb:GetItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+            Resource: !GetAtt DataTable.Arn
+
+  # Lambda Function
+  ApiFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-api"
+      # TODO: set VPC configuration if needed
+      Runtime: python3.14
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DataTable
+      Code:
+        ZipFile: |
+          # Lambda code will be deployed separately
+          # See ../backend/lambda_function.py for the actual implementation
+          import json
+          def handler(event, context):
+            return {
+              'statusCode': 200,
+              'body': json.dumps({'message': 'Deploy backend code separately'})
+            }
+
+  # API Gateway
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub "${AWS::StackName}-api"
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # API Gateway Resource
+  ApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: data
+
+  # API Gateway Method
+  ApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ApiResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path\
+          /2015-03-31/functions/${ApiFunction.Arn}/invocations"
+
+  # Lambda Permission for API Gateway
+  LambdaApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApiFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:\
+        ${AWS::AccountId}:${ApiGateway}/*/POST/data"
+
+  # API Gateway Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ApiMethod
+    Properties:
+      RestApiId: !Ref ApiGateway
+      StageName: prod
+
+  # CloudFront Distribution
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt StaticContentBucket.RegionalDomainName
+            S3OriginConfig: {}
+            OriginAccessControlId: !Ref OriginAccessControl
+          - Id: ApiOrigin
+            DomainName: !Sub "${ApiGateway}.execute-api.${AWS::Region}\
+              .amazonaws.com"
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+            OriginPath: /prod
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          Compress: true
+        CacheBehaviors:
+          - PathPattern: /api/*
+            TargetOriginId: ApiOrigin
+            ViewerProtocolPolicy: https-only
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+        DefaultRootObject: index.html
+        Enabled: true
+        PriceClass: PriceClass_100
+
+Outputs:
+  CloudFrontURL:
+    Description: CloudFront Distribution URL
+    Value: !Sub "https://${CloudFrontDistribution.DomainName}"
+
+  S3BucketName:
+    Description: S3 Bucket for static content
+    Value: !Ref StaticContentBucket
+
+  APILambdaName:
+    Description: Lambda function name for API
+    Value: !Ref ApiFunction
