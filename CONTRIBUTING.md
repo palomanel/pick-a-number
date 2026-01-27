@@ -62,7 +62,7 @@ Follow these steps:
 Ensure you're using the [devcontainer](.devcontainer/devcontainer.json)
 or install the pre-commit hooks before making any commits.
 
-1. Create a feature branch: `git checkout -b feature/your-feature-name`
+1. Create a feature branch: `git checkout -b "feature/your-feature-name"`
 1. Make your changes
 1. Write or update tests and documentation
 1. Run the test suite and pre-commit checks: `pytest && pre-commit run --all-files`
