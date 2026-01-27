@@ -19,7 +19,7 @@ in [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 This project contains the code for a basic
 [JAMstack](https://en.wikipedia.org/wiki/JAMstack) app.
-All of the componenents are contained in this repo including:
+All of the components are contained in this repo including:
 
 - **Frontend**, a one page web app
 - **Backend**, a data ingestion API endpoint and persistence layer
@@ -30,10 +30,21 @@ All of the componenents are contained in this repo including:
 
 ## Usage
 
+Everything has been built and tested inside the
+[devcontainer](.devcontainer/devcontainer.json) using
+[VS Code](https://code.visualstudio.com/),
+if you plan to deploy from you local system there's a couple pre-requisites to
+consider:
+
+- scripts need a Linux or MacOS enviroment
+- [aws-cli](https://aws.amazon.com/cli/) should be available
+- you should have administrator access to an AWS account
+
+To deploy the app follow these steps:
+
 1. Clone or fork the project
-1. Ensure AWS CLI is configured with appropriate permissions, if you're using
-   the [devcontainer](.devcontainer/devcontainer.json) the environment is baked
-   for you and you just need to run `aws login` to get started
+1. Login to your AWS account, `aws login` with web based authentication works
+   fine, no need to use tokens
 1. Review `src/scripts/deploy.sh` and change the variable defaults to your
    liking (i.e. `STACK_NAME`, `REGION`, `BUDGET_EMAIL`)
 1. Run the deployment script:

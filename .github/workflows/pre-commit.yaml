@@ -1,0 +1,25 @@
+---
+name: Double check pre-commit hooks pass
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ hashFiles('.pre-commit-config.yaml') }}
+      - uses: pre-commit/action@v3.0.1
