@@ -35,7 +35,7 @@ FUNCTION_NAME=$(aws cloudformation describe-stacks \
     --output text)
 echo "Updating Lambda function code for ${FUNCTION_NAME}"
 cd ../backend
-zip -rq lambda_function.zip lambda_function.py
+zip -rq lambda_function.zip index.py
 REVISION_ID=$(aws lambda update-function-code \
     --function-name "${FUNCTION_NAME}" \
     --zip-file fileb://lambda_function.zip \
