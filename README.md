@@ -21,12 +21,17 @@ This project contains the code for a basic
 [JAMstack](https://en.wikipedia.org/wiki/JAMstack) app.
 All of the components are contained in this repo including:
 
-- **Frontend**, a one page web app
+- **Frontend**, a one page web app using HTML and vanilla JavaScript
 - **Backend**, a data ingestion API endpoint and persistence layer
-- **Infrastructure-as-Code**, a CloudFormation template that creates the
-  necessary AWS infrastructure, including a Budget
+- **Infrastructure-as-Code**, a CloudFormation template that deploys the
+  AWS infrastructure, including an AWS Budget
 - **CI/CD and tooling**, a `devcontainer` configuration, local `pre-commit`
   hooks, and CI/CD workflows
+
+If you have an [AWS Free Tier](https://aws.amazon.com/free/) account and don't
+exceed the thresholds for the services being used your consumption
+will be **zero**, so this project is a great way to get your feet wet using
+cloud infrastructure.
 
 ## Usage
 
@@ -59,10 +64,8 @@ on your web browser to open the web app.
 
 Upon opening the web app users will be able to pick a number between 1 and 10.
 By clicking the "Submit" button a JSON payload will be posted to the API backend
-and stored in DynamoDB.
-
-The web browser will require authorization to access the user's location. This is
-optional.
+and stored in DynamoDB. The web browser will require authorization to access the
+user's location. This is optional.
 
 The JSON payload includes:
 
@@ -70,11 +73,16 @@ The JSON payload includes:
 - A timestamp in UTC format
 - The geo-location coordinates if the user authorizes
 
-Check out the [architecture](docs/ARCHITECTURE.md) and how to
-[contribute](CONTRIBUTING.md).
+Review the
+[AWS Billing and Cost Management Console](https://aws.amazon.com/aws-cost-management/billing-and-cost-management-console-home/)
+to understand the infrastructure cost. Navigate to the **Free Tier**
+screen to learn more about usage thresholds for each service.
 When you're done don't forget to tear down everything to avoid unneeded costs.
 
 ```bash
 cd src/scripts
 ./destroy.sh
 ```
+
+Check out the [architecture](docs/ARCHITECTURE.md) and how to
+[contribute](CONTRIBUTING.md).
