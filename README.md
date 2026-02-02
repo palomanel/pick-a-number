@@ -21,12 +21,17 @@ This project contains the code for a basic
 [JAMstack](https://en.wikipedia.org/wiki/JAMstack) app.
 All of the components are contained in this repo including:
 
-- **Frontend**, a one page web app
+- **Frontend**, a one page web app using HTML and vanilla JavaScript
 - **Backend**, a data ingestion API endpoint and persistence layer
-- **Infrastructure-as-Code**, a CloudFormation template that creates the
-  necessary AWS infrastructure, including a Budget
+- **Infrastructure-as-Code**, a CloudFormation template that deploys the
+  AWS infrastructure, including an AWS Budget
 - **CI/CD and tooling**, a `devcontainer` configuration, local `pre-commit`
   hooks, and CI/CD workflows
+
+If you're using the [AWS Free Tier](https://aws.amazon.com/free/) and don't
+exceed the free usage thresholds for the services being used your consumption
+will be **zero**, so this project is a great way to get your feet wet using
+cloud infrastructure.
 
 ## Usage
 
@@ -70,9 +75,14 @@ The JSON payload includes:
 - A timestamp in UTC format
 - The geo-location coordinates if the user authorizes
 
+Review the
+[AWS Billing and Cost Management Console](https://aws.amazon.com/aws-cost-management/billing-and-cost-management-console-home/)
+to understand the infrastructure cost. Navigate to the **Free Tier**
+screen to understand the usage thresholds for each service.
+When you're done don't forget to tear down everything to avoid unneeded costs.
+
 Check out the [architecture](docs/ARCHITECTURE.md) and how to
 [contribute](CONTRIBUTING.md).
-When you're done don't forget to tear down everything to avoid unneeded costs.
 
 ```bash
 cd src/scripts
