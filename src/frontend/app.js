@@ -1,5 +1,5 @@
 // Configuration
-const API_ENDPOINT = "/api/data";
+const API_ENDPOINT = "/api/submit-number";
 
 // DOM Elements
 const numberButtons = document.querySelectorAll(".number-btn");

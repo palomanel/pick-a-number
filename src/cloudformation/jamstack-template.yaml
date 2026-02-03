@@ -88,9 +88,13 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
 
   # Lambda Execution Role
   LambdaExecutionRole:
@@ -123,14 +127,14 @@ Resources:
               - dynamodb:DeleteItem
             Resource: !GetAtt DataTable.Arn
 
-  # Lambda Function
-  ApiFunction:
+  # Lambda Function (Submit number)
+  SubmitNumberFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "${AWS::StackName}-api"
+      FunctionName: !Sub "${AWS::StackName}-submit-number"
       # TODO: set VPC configuration if needed
       Runtime: python3.14
-      Handler: index.handler
+      Handler: submit_number.handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Environment:
         Variables:
@@ -163,41 +167,41 @@ Resources:
       ParentId: !GetAtt ApiGateway.RootResourceId
       PathPart: api
 
-  ApiDataResource:
+  SubmitNumberResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       RestApiId: !Ref ApiGateway
       ParentId: !Ref ApiRoot
-      PathPart: data
+      PathPart: submit-number
 
   # API Gateway Method
-  ApiMethod:
+  SubmitNumberMethod:
     Type: AWS::ApiGateway::Method
     Properties:
       RestApiId: !Ref ApiGateway
-      ResourceId: !Ref ApiDataResource
+      ResourceId: !Ref SubmitNumberResource
       HttpMethod: POST
       AuthorizationType: NONE
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:\
-          lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations"
+        Uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}\
+          :lambda:path/2015-03-31/functions/${SubmitNumberFunction.Arn}/invocations"
 
-  # Lambda Permission for API Gateway
-  LambdaApiPermission:
+  # SubmitNumberFunction Permission for API Gateway
+  SubmitNumberFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref ApiFunction
+      FunctionName: !Ref SubmitNumberFunction
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:\
-        ${AWS::AccountId}:${ApiGateway}/*/POST/api/data"
+        ${AWS::AccountId}:${ApiGateway}/*/POST/api/submit-number"
 
   # API Gateway Deployment
   ApiDeployment:
     Type: AWS::ApiGateway::Deployment
-    DependsOn: ApiMethod
+    DependsOn: SubmitNumberMethod
     Properties:
       RestApiId: !Ref ApiGateway
       StageName: prod
@@ -276,6 +280,6 @@ Outputs:
     Description: S3 Bucket for static content
     Value: !Ref StaticContentBucket
 
-  APILambdaName:
-    Description: Lambda function name for API
-    Value: !Ref ApiFunction
+  SubmitNumberFunctionName:
+    Description: Lambda function name for submit-number function
+    Value: !Ref SubmitNumberFunction

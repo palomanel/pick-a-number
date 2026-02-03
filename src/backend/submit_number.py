@@ -23,28 +23,31 @@ def handler(event, context):
 
         # Convert floats to Decimals for DynamoDB compatibility
         # Also handle the case where location might be None
-        data = {
-            "number": payload["number"],
-            "timestamp": payload["timestamp"],
-            "location": (
-                {
-                    "latitude": Decimal(repr(payload["location"]["latitude"])),
-                    "longitude": Decimal(repr(payload["location"]["longitude"])),
-                    # TODO: Add more fields if necessary
-                }
-                if payload["location"] is not None
-                else {
-                    "latitude": None,
-                    "longitude": None,
-                }
-            ),
-        }
+        # TODO: Add more fields if necessary
+        location = (
+            {
+                "latitude": Decimal(repr(payload["location"]["latitude"])),
+                "longitude": Decimal(repr(payload["location"]["longitude"])),
+            }
+            if payload["location"] is not None
+            else {
+                "latitude": None,
+                "longitude": None,
+            }
+        )
 
         item_id = str(uuid.uuid4())
 
-        table.put_item(Item={"id": item_id, "data": data})
+        table.put_item(
+            Item={
+                "id": item_id,
+                "number": payload["number"],
+                "timestamp": payload["timestamp"],
+                "location": location,
+            }
+        )
 
-        logger.info(f"Successfully stored item {item_id}")
+        logger.info(f"Successfully stored item {item_id} in DynamoDB")
 
         return {
             "statusCode": 200,
