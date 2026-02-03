@@ -41,7 +41,7 @@ Everything has been built and tested inside the
 if you plan to deploy from you local system there's a couple pre-requisites to
 consider:
 
-- scripts need a Linux or MacOS enviroment
+- scripts need a Linux or MacOS environment
 - [aws-cli](https://aws.amazon.com/cli/) should be available
 - you should have administrator access to an AWS account
 
