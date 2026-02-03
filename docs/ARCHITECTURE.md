@@ -26,8 +26,12 @@ are accessible from the same domain using different URI patterns.
 
 ## Request Flow
 
-1. **Static Content**: `example.com/` → CloudFront → S3
-2. **API Requests**: `example.com/api/*` → CloudFront → API Gateway → Lambda → DynamoDB
+1. **Static Content**: `/` → CloudFront → S3
+1. **API Requests**: `/api/*` → CloudFront → API Gateway → Lambda → DynamoDB
+   1. `POST /api/submit-number`, handled by the `SubmitNumberFunction` Lambda,
+      accepts a paylod that is persisted in DynamoDB.
+   1. `GET /api/daily-stats`, handled by the `DailyStatsFunction` Lambda,
+      scans DynamoDB and returns daily statistics
 
 ## Key Features
 

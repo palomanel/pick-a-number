@@ -31,20 +31,25 @@ BUCKET_NAME=$(aws cloudformation describe-stacks \
 echo "Uploading static content to S3 bucket: ${BUCKET_NAME}"
 aws s3 sync "../${FRONTEND_DIR}" "s3://${BUCKET_NAME}" --delete
 
-FUNCTION_NAME=$(aws cloudformation describe-stacks \
-    --stack-name "${STACK_NAME}" \
-    --query 'Stacks[0].Outputs[?OutputKey==`SubmitNumberFunctionName`].OutputValue' \
-    --output text)
-echo "Updating Lambda function code for ${FUNCTION_NAME}"
 cd ../backend
-zip -rq submit_number.zip submit_number.py
-REVISION_ID=$(aws lambda update-function-code \
-    --function-name "${FUNCTION_NAME}" \
-    --zip-file fileb://submit_number.zip \
-    --query "RevisionId" \
-    --output text)
-echo "Lambda function ${FUNCTION_NAME} updated successfully, Revision ID: ${REVISION_ID}"
-rm submit_number.zip
+while read FUNCTION SOURCE; do
+    FUNCTION_NAME=$(aws cloudformation describe-stacks \
+        --stack-name "${STACK_NAME}" \
+        --query "Stacks[0].Outputs[?OutputKey==\`${FUNCTION}\`].OutputValue" \
+        --output text)
+    echo "Updating Lambda function code for ${FUNCTION_NAME}"
+    zip -rq "${FUNCTION}.zip" "${SOURCE}"
+    REVISION_ID=$(aws lambda update-function-code \
+        --function-name "${FUNCTION_NAME}" \
+        --zip-file fileb://"${FUNCTION}.zip" \
+        --query "RevisionId" \
+        --output text)
+    echo "Lambda function ${FUNCTION_NAME} updated successfully, Revision ID: ${REVISION_ID}"
+    rm "${FUNCTION}.zip"
+done << EOF
+SubmitNumberFunctionName submit_number.py
+DailyStatsFunctionName daily_stats.py
+EOF
 
 echo "Getting CloudFront URL..."
 CLOUDFRONT_URL=$(aws cloudformation describe-stacks \
@@ -53,6 +58,11 @@ CLOUDFRONT_URL=$(aws cloudformation describe-stacks \
     --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontURL`].OutputValue' \
     --output text)
 
-echo "Deployment complete!"
-echo "Application URL: ${CLOUDFRONT_URL}"
-echo "API Endpoint: ${CLOUDFRONT_URL}/api/submit-number"
+cat << EOF
+Deployment complete!
+Application URL:
+- ${CLOUDFRONT_URL}
+API Endpoints:
+- ${CLOUDFRONT_URL}/api/submit-number
+- ${CLOUDFRONT_URL}/api/daily-stats
+EOF
