@@ -200,13 +200,13 @@ Resources:
       SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:\
         ${AWS::AccountId}:${ApiGateway}/*/POST/api/submit-number"
 
-  # Lambda Function (Daily Stats)
-  DailyStatsFunction:
+  # Lambda Function (Stats)
+  StatsFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "${AWS::StackName}-daily-stats"
+      FunctionName: !Sub "${AWS::StackName}-stats"
       Runtime: python3.14
-      Handler: daily_stats.handler
+      Handler: stats.handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Environment:
         Variables:
@@ -214,7 +214,7 @@ Resources:
       Code:
         ZipFile: |
           # Lambda code will be deployed separately
-          # See ../backend/daily_stats.py for the actual implementation
+          # See ../backend/stats.py for the actual implementation
           import json
           def handler(event, context):
             return {
@@ -222,49 +222,49 @@ Resources:
               'body': json.dumps({'message': 'Deploy backend code separately'})
             }
 
-  # API Gateway Resource for daily-stats
-  DailyStatsResource:
+  # API Gateway Resource for stats
+  StatsResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       RestApiId: !Ref ApiGateway
       ParentId: !Ref ApiRoot
-      PathPart: daily-stats
+      PathPart: stats
 
-  # API Gateway Method for daily-stats (GET)
-  DailyStatsMethod:
+  # API Gateway Method for stats (GET)
+  StatsMethod:
     Type: AWS::ApiGateway::Method
     Properties:
       RestApiId: !Ref ApiGateway
-      ResourceId: !Ref DailyStatsResource
+      ResourceId: !Ref StatsResource
       HttpMethod: GET
       AuthorizationType: NONE
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
         Uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}\
-          :lambda:path/2015-03-31/functions/${DailyStatsFunction.Arn}/invocations"
+          :lambda:path/2015-03-31/functions/${StatsFunction.Arn}/invocations"
 
-  # DailyStatsFunction Permission for API Gateway
-  DailyStatsFunctionPermission:
+  # StatsFunction Permission for API Gateway
+  StatsFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref DailyStatsFunction
+      FunctionName: !Ref StatsFunction
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:\
-        ${AWS::AccountId}:${ApiGateway}/*/GET/api/daily-stats"
+        ${AWS::AccountId}:${ApiGateway}/*/GET/api/stats"
 
   # API Gateway Deployment
   ApiDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
       - SubmitNumberMethod
-      - DailyStatsMethod
+      - StatsMethod
     Properties:
       RestApiId: !Ref ApiGateway
       StageName: prod
       Description: !Sub "Deployment for ${AWS::StackName} with\
-        submit-number and daily-stats endpoints"
+        submit-number and stats endpoints"
 
   # CloudFront Distribution
   CloudFrontDistribution:
@@ -344,6 +344,6 @@ Outputs:
     Description: Lambda function name for submit-number function
     Value: !Ref SubmitNumberFunction
 
-  DailyStatsFunctionName:
-    Description: Lambda function name for daily-stats function
-    Value: !Ref DailyStatsFunction
+  StatsFunctionName:
+    Description: Lambda function name for stats function
+    Value: !Ref StatsFunction

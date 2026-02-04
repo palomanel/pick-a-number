@@ -48,7 +48,7 @@ while read FUNCTION SOURCE; do
     rm "${FUNCTION}.zip"
 done << EOF
 SubmitNumberFunctionName submit_number.py
-DailyStatsFunctionName daily_stats.py
+StatsFunctionName stats.py
 EOF
 
 echo "Getting CloudFront URL..."
@@ -64,5 +64,5 @@ Application URL:
 - ${CLOUDFRONT_URL}
 API Endpoints:
 - ${CLOUDFRONT_URL}/api/submit-number
-- ${CLOUDFRONT_URL}/api/daily-stats
+- ${CLOUDFRONT_URL}/api/stats
 EOF

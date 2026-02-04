@@ -51,7 +51,8 @@ To deploy the app follow these steps:
 1. Login to your AWS account, `aws login` with web based authentication works
    fine, no need to use tokens
 1. Review `src/scripts/deploy.sh` and change the variable defaults to your
-   liking (i.e. `STACK_NAME`, `REGION`, `BUDGET_EMAIL`)
+   liking (i.e. `STACK_NAME`, `REGION`, `BUDGET_EMAIL`), it's particularly
+   important you change `STACK_NAME` to avoid name clashes
 1. Run the deployment script:
 
 ```bash
