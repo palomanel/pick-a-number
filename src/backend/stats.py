@@ -18,9 +18,9 @@ def handler(event, context):
         logger.info(f"Received event: {json.dumps(event)}")
 
         # Get our date range
-        today = datetime.combine(datetime.now(timezone.utc), time.min)
-        yesterday = today - timedelta(days=1)
-        logger.info(f"Querying for submissions between {yesterday} and {today}")
+        from_time = datetime.fromisoformat(event["queryStringParameters"]["from"])
+        to_time = datetime.fromisoformat(event["queryStringParameters"]["to"])
+        logger.info(f"Querying for submissions between {from_time} and {to_time}")
 
         # Query DynamoDB for all entries from yesterday using scan with filter
         # Using scan since we don't have a GSI on timestamp
@@ -30,13 +30,13 @@ def handler(event, context):
                 "#ts": "timestamp",
             },
             ExpressionAttributeValues={
-                ":start": yesterday.isoformat(),
-                ":end": today.isoformat(),
+                ":start": from_time.isoformat(),
+                ":end": to_time.isoformat(),
             },
         )
 
         items = response.get("Items", [])
-        logger.info(f"Found {len(items)} submissions yesterday")
+        logger.info(f"Found {len(items)} submissions in the given date range")
 
         if not items:
             return {
@@ -47,7 +47,8 @@ def handler(event, context):
                 },
                 "body": json.dumps(
                     {
-                        "date": yesterday.isoformat(),
+                        "from": from_time.isoformat(),
+                        "to": to_time.isoformat(),
                         "most_selected_number": None,
                         "count": 0,
                         "total_submissions": 0,
@@ -72,7 +73,8 @@ def handler(event, context):
             },
             "body": json.dumps(
                 {
-                    "date": yesterday.isoformat(),
+                    "from": from_time.isoformat(),
+                    "to": to_time.isoformat(),
                     "most_selected_number": most_common_number,
                     "count": int(count),
                     "total_submissions": len(items),
