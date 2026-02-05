@@ -75,6 +75,19 @@ Resources:
         SigningBehavior: always
         SigningProtocol: sigv4
 
+  # Custom Origin Request Policy for API Gateway
+  ApiOriginRequestPolicy:
+    Type: AWS::CloudFront::OriginRequestPolicy
+    Properties:
+      OriginRequestPolicyConfig:
+        Name: !Sub "${AWS::StackName}-api-origin-policy"
+        QueryStringsConfig:
+          QueryStringBehavior: all
+        HeadersConfig:
+          HeaderBehavior: none
+        CookiesConfig:
+          CookieBehavior: none
+
   # DynamoDB Table
   DataTable:
     Type: AWS::DynamoDB::Table
@@ -238,9 +251,16 @@ Resources:
       ResourceId: !Ref StatsResource
       HttpMethod: GET
       AuthorizationType: NONE
+      RequestParameters:
+        method.request.querystring.to: false
+        method.request.querystring.from: false
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
+        RequestParameters:
+          integration.request.querystring.to: "method.request.querystring.to"
+          integration.request.querystring.from: "method.request.querystring.\
+            from"
         Uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}\
           :lambda:path/2015-03-31/functions/${StatsFunction.Arn}/invocations"
 
@@ -280,7 +300,6 @@ Resources:
             DomainName: !Sub "${ApiGateway}.execute-api.${AWS::Region}\
               .amazonaws.com"
             CustomOriginConfig:
-              HTTPPort: 80
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
             OriginPath: /prod
@@ -305,9 +324,10 @@ Resources:
               - GET
               - HEAD
             CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+            OriginRequestPolicyId: !Ref ApiOriginRequestPolicy
         DefaultRootObject: index.html
         Enabled: true
+        IPV6Enabled: true
         PriceClass: PriceClass_100
 
   # AWS Budget for cost monitoring
