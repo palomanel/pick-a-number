@@ -6,28 +6,47 @@ This architecture implements a JAMstack (JavaScript, APIs, Markup) application
 on AWS, providing a scalable, serverless solution where static content and APIs
 are accessible from the same domain using different URI patterns.
 
+The two main objectives when designing this architecture have been:
+
+- provide a full working example with a frontend, data storage, and
+  data retrieval and analysis
+- leverage the AWS free tier to create and run the app without inferring any
+  costs
+
 ![JAMstack Architecture](assets/jamstack-architecture.png)
 
 ## Architecture Components
 
 ### Frontend Layer
 
-- **Amazon S3**: Hosts static assets (HTML, CSS, JavaScript bundles)
-- **Amazon CloudFront**: CDN for global content delivery and request routing
+- **Amazon CloudFront**: CDN for global content delivery and request routing.
+- **Amazon S3**: Very cost efficient storage to host static assets (HTML, CSS,
+  JavaScript bundles).
 
 ### API Layer
 
-- **Amazon API Gateway**: RESTful API endpoints under `/api/*` path
-- **AWS Lambda**: Serverless functions for JSON payload processing
+- **Amazon API Gateway**: manages the RESTful API endpoints under `/api/*`
+  path.
+- **AWS Lambda**: Serverless functions for JSON payload processing, Lambda
+  was used for simplicity, on a real app the compute could be replaced for
+  another pay-as-you-go resource like ECS Fargate.
 
 ### Data Layer
 
-- **Amazon DynamoDB**: NoSQL database for JSON data storage
+- **Amazon DynamoDB**: NoSQL database for JSON data storage. For the example
+  use-case we would ideally would use Timestream which is designed for
+  time-series workloads, but its free tier is only available for 30 days.
+  Using DynamoDB has the downside of the caller code needing to aggregate the
+  data when doing a range query.
 
 ## Request Flow
 
-1. **Static Content**: `example.com/` → CloudFront → S3
-2. **API Requests**: `example.com/api/*` → CloudFront → API Gateway → Lambda → DynamoDB
+1. **Static Content**: `/` → CloudFront → S3
+1. **API Requests**: `/api/*` → CloudFront → API Gateway → Lambda → DynamoDB
+   1. `POST /api/submit-number`, handled by the `SubmitNumberFunction` Lambda,
+      accepts a paylod that is persisted in DynamoDB.
+   1. `GET /api/daily-stats`, handled by the `DailyStatsFunction` Lambda,
+      scans DynamoDB for a date range and returns statistics.
 
 ## Key Features
 

@@ -3,6 +3,8 @@ import boto3
 import uuid
 import os
 import logging
+import datetime
+from datetime import date, datetime, timezone, time
 from decimal import Decimal
 
 logger = logging.getLogger()
@@ -19,32 +21,40 @@ def handler(event, context):
 
         # Get payload from event
         payload = json.loads(event["body"])
-        logger.info(f"Parsed body: {payload}")
+        event_datetime = datetime.strptime(
+            event["requestContext"]["requestTime"], "%d/%b/%Y:%H:%M:%S %z"
+        )
+        event_date = event_datetime.date().isoformat()
+        logger.info(f"Parsed body: {json.dumps(payload)}")
 
         # Convert floats to Decimals for DynamoDB compatibility
         # Also handle the case where location might be None
-        data = {
-            "number": payload["number"],
-            "timestamp": payload["timestamp"],
-            "location": (
-                {
-                    "latitude": Decimal(repr(payload["location"]["latitude"])),
-                    "longitude": Decimal(repr(payload["location"]["longitude"])),
-                    # TODO: Add more fields if necessary
-                }
-                if payload["location"] is not None
-                else {
-                    "latitude": None,
-                    "longitude": None,
-                }
-            ),
-        }
+        # TODO: Add more fields if necessary
+        location = (
+            {
+                "latitude": Decimal(repr(payload["location"]["latitude"])),
+                "longitude": Decimal(repr(payload["location"]["longitude"])),
+            }
+            if payload["location"] is not None
+            else {
+                "latitude": None,
+                "longitude": None,
+            }
+        )
 
-        item_id = str(uuid.uuid4())
+        table.put_item(
+            Item={
+                "event_date": event_date,
+                "event_datetime": event_datetime.isoformat(),
+                "number": payload["number"],
+                "client_timestamp": payload["timestamp"],
+                "location": location,
+            }
+        )
 
-        table.put_item(Item={"id": item_id, "data": data})
-
-        logger.info(f"Successfully stored item {item_id}")
+        logger.info(
+            f"Successfully stored item in DynamoDB, PK: {event_date} SK: {event_datetime.isoformat()}"
+        )
 
         return {
             "statusCode": 200,
@@ -52,7 +62,7 @@ def handler(event, context):
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
             },
-            "body": json.dumps({"id": item_id, "status": "success"}),
+            "body": json.dumps({"event_date": event_date, "status": "success"}),
         }
     except json.JSONDecodeError as e:
         logger.error(f"JSON decode error: {str(e)}, event body: {event.get('body')}")

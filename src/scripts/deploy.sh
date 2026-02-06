@@ -31,20 +31,25 @@ BUCKET_NAME=$(aws cloudformation describe-stacks \
 echo "Uploading static content to S3 bucket: ${BUCKET_NAME}"
 aws s3 sync "../${FRONTEND_DIR}" "s3://${BUCKET_NAME}" --delete
 
-FUNCTION_NAME=$(aws cloudformation describe-stacks \
-    --stack-name "${STACK_NAME}" \
-    --query 'Stacks[0].Outputs[?OutputKey==`APILambdaName`].OutputValue' \
-    --output text)
-echo "Updating Lambda function code for ${FUNCTION_NAME}"
 cd ../backend
-zip -rq lambda_function.zip index.py
-REVISION_ID=$(aws lambda update-function-code \
-    --function-name "${FUNCTION_NAME}" \
-    --zip-file fileb://lambda_function.zip \
-    --query "RevisionId" \
-    --output text)
-echo "Lambda function code updated successfully, Revision ID: ${REVISION_ID}"
-rm lambda_function.zip
+while read FUNCTION SOURCE; do
+    FUNCTION_NAME=$(aws cloudformation describe-stacks \
+        --stack-name "${STACK_NAME}" \
+        --query "Stacks[0].Outputs[?OutputKey==\`${FUNCTION}\`].OutputValue" \
+        --output text)
+    echo "Updating Lambda function code for ${FUNCTION_NAME}"
+    zip -rq "${FUNCTION}.zip" "${SOURCE}"
+    REVISION_ID=$(aws lambda update-function-code \
+        --function-name "${FUNCTION_NAME}" \
+        --zip-file fileb://"${FUNCTION}.zip" \
+        --query "RevisionId" \
+        --output text)
+    echo "Lambda function ${FUNCTION_NAME} updated successfully, Revision ID: ${REVISION_ID}"
+    rm "${FUNCTION}.zip"
+done << EOF
+SubmitNumberFunctionName submit_number.py
+StatsFunctionName stats.py
+EOF
 
 echo "Getting CloudFront URL..."
 CLOUDFRONT_URL=$(aws cloudformation describe-stacks \
@@ -53,6 +58,11 @@ CLOUDFRONT_URL=$(aws cloudformation describe-stacks \
     --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontURL`].OutputValue' \
     --output text)
 
-echo "Deployment complete!"
-echo "Application URL: ${CLOUDFRONT_URL}"
-echo "API Endpoint: ${CLOUDFRONT_URL}/api/data"
+cat << EOF
+Deployment complete!
+Application URL:
+- ${CLOUDFRONT_URL}
+API Endpoints:
+- ${CLOUDFRONT_URL}/api/submit-number
+- ${CLOUDFRONT_URL}/api/stats
+EOF
