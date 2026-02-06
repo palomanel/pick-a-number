@@ -24,6 +24,7 @@ def handler(event, context):
         event_datetime = datetime.strptime(
             event["requestContext"]["requestTime"], "%d/%b/%Y:%H:%M:%S %z"
         )
+        event_date = event_datetime.date().isoformat()
         logger.info(f"Parsed body: {json.dumps(payload)}")
 
         # Convert floats to Decimals for DynamoDB compatibility
@@ -43,7 +44,7 @@ def handler(event, context):
 
         table.put_item(
             Item={
-                "event_date": event_datetime.date().isoformat(),
+                "event_date": event_date,
                 "event_datetime": event_datetime.isoformat(),
                 "number": payload["number"],
                 "client_timestamp": payload["timestamp"],
@@ -51,7 +52,9 @@ def handler(event, context):
             }
         )
 
-        logger.info(f"Successfully stored item in DynamoDB, SK: {event_datetime}")
+        logger.info(
+            f"Successfully stored item in DynamoDB, PK: {event_date} SK: {event_datetime.isoformat()}"
+        )
 
         return {
             "statusCode": 200,
@@ -59,9 +62,7 @@ def handler(event, context):
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
             },
-            "body": json.dumps(
-                {"datetime": event_datetime.isoformat(), "status": "success"}
-            ),
+            "body": json.dumps({"event_date": event_date, "status": "success"}),
         }
     except json.JSONDecodeError as e:
         logger.error(f"JSON decode error: {str(e)}, event body: {event.get('body')}")

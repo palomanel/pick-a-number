@@ -22,7 +22,7 @@ This project contains the code for a basic
 All of the components are contained in this repo including:
 
 - **Frontend**, a one page web app using HTML and vanilla JavaScript
-- **Backend**, a data ingestion API endpoint and persistence layer
+- **Backend**, a data ingestion REST API and persistence layer
 - **Infrastructure-as-Code**, a CloudFormation template that deploys the
   AWS infrastructure, including an AWS Budget
 - **CI/CD and tooling**, a `devcontainer` configuration, local `pre-commit`
@@ -59,24 +59,40 @@ cd src/scripts
 ./deploy.sh
 ```
 
-The deployment script will output the CloudFront distribution URL. Use this address
-on your web browser to open the web app.
+The deployment script will output the application endpoints, all fronted by the
+CloudFront distribution URL. Use that address on your web browser to open the
+web app.
 
 Upon opening the web app users will be able to pick a number between 1 and 10.
 By clicking the "Submit" button a JSON payload will be posted to the API backend
 and stored in DynamoDB. The web browser will require authorization to access the
 user's location. This is optional.
 
-The JSON payload includes:
+You can connect to the REST API using `curl`:
 
-- The number selected by the user
-- A timestamp in UTC format
-- The geo-location coordinates if the user authorizes
+```bash
+# submit a new record
+curl -s -X POST https://example.cloudfront.net/api/submit-number \
+  -H "Content-Type: application/json" \
+  -d '{
+    "number": 7,
+    "timestamp": "2026-02-05T16:29:01.959Z",
+    "location": null
+  }' | jq .
+# query submitted records
+# the key is the record submission date ("event_date")
+curl -s "https://example.cloudfront.net/api/stats" \
+  -G \
+  --data-urlencode "from=2026-01-01" \
+  --data-urlencode "to=2026-02-28" \
+  | jq .
+```
 
 Review the
 [AWS Billing and Cost Management Console](https://aws.amazon.com/aws-cost-management/billing-and-cost-management-console-home/)
 to understand the infrastructure cost. Navigate to the **Free Tier**
 screen to learn more about usage thresholds for each service.
+
 When you're done don't forget to tear down everything to avoid unneeded costs.
 
 ```bash
