@@ -75,6 +75,19 @@ Resources:
         SigningBehavior: always
         SigningProtocol: sigv4
 
+  # Custom Origin Request Policy for API Gateway
+  ApiOriginRequestPolicy:
+    Type: AWS::CloudFront::OriginRequestPolicy
+    Properties:
+      OriginRequestPolicyConfig:
+        Name: !Sub "${AWS::StackName}-api-origin-policy"
+        QueryStringsConfig:
+          QueryStringBehavior: all
+        HeadersConfig:
+          HeaderBehavior: none
+        CookiesConfig:
+          CookieBehavior: none
+
   # DynamoDB Table
   DataTable:
     Type: AWS::DynamoDB::Table
@@ -86,11 +99,15 @@ Resources:
         SSEEnabled: true
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: id
+        - AttributeName: event_date
+          AttributeType: S
+        - AttributeName: event_datetime
           AttributeType: S
       KeySchema:
-        - AttributeName: id
+        - AttributeName: event_date
           KeyType: HASH
+        - AttributeName: event_datetime
+          KeyType: RANGE
 
   # Lambda Execution Role
   LambdaExecutionRole:
@@ -121,16 +138,19 @@ Resources:
               - dynamodb:GetItem
               - dynamodb:UpdateItem
               - dynamodb:DeleteItem
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:BatchGetItem
             Resource: !GetAtt DataTable.Arn
 
-  # Lambda Function
-  ApiFunction:
+  # Lambda Function (Submit number)
+  SubmitNumberFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "${AWS::StackName}-api"
+      FunctionName: !Sub "${AWS::StackName}-submit-number"
       # TODO: set VPC configuration if needed
       Runtime: python3.14
-      Handler: index.handler
+      Handler: submit_number.handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Environment:
         Variables:
@@ -138,7 +158,7 @@ Resources:
       Code:
         ZipFile: |
           # Lambda code will be deployed separately
-          # See ../backend/index.py for the actual implementation
+          # See ../backend/submit_number.py for the actual implementation
           import json
           def handler(event, context):
             return {
@@ -163,44 +183,109 @@ Resources:
       ParentId: !GetAtt ApiGateway.RootResourceId
       PathPart: api
 
-  ApiDataResource:
+  SubmitNumberResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       RestApiId: !Ref ApiGateway
       ParentId: !Ref ApiRoot
-      PathPart: data
+      PathPart: submit-number
 
   # API Gateway Method
-  ApiMethod:
+  SubmitNumberMethod:
     Type: AWS::ApiGateway::Method
     Properties:
       RestApiId: !Ref ApiGateway
-      ResourceId: !Ref ApiDataResource
+      ResourceId: !Ref SubmitNumberResource
       HttpMethod: POST
       AuthorizationType: NONE
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:\
-          lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations"
+        Uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}\
+          :lambda:path/2015-03-31/functions/${SubmitNumberFunction.Arn}/invocations"
 
-  # Lambda Permission for API Gateway
-  LambdaApiPermission:
+  # SubmitNumberFunction Permission for API Gateway
+  SubmitNumberFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref ApiFunction
+      FunctionName: !Ref SubmitNumberFunction
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:\
-        ${AWS::AccountId}:${ApiGateway}/*/POST/api/data"
+        ${AWS::AccountId}:${ApiGateway}/*/POST/api/submit-number"
+
+  # Lambda Function (Stats)
+  StatsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-stats"
+      Runtime: python3.14
+      Handler: stats.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DataTable
+      Code:
+        ZipFile: |
+          # Lambda code will be deployed separately
+          # See ../backend/stats.py for the actual implementation
+          import json
+          def handler(event, context):
+            return {
+              'statusCode': 200,
+              'body': json.dumps({'message': 'Deploy backend code separately'})
+            }
+
+  # API Gateway Resource for stats
+  StatsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !Ref ApiRoot
+      PathPart: stats
+
+  # API Gateway Method for stats (GET)
+  StatsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref StatsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.querystring.to: false
+        method.request.querystring.from: false
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        RequestParameters:
+          integration.request.querystring.to: "method.request.querystring.to"
+          integration.request.querystring.from: "method.request.querystring.\
+            from"
+        Uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}\
+          :lambda:path/2015-03-31/functions/${StatsFunction.Arn}/invocations"
+
+  # StatsFunction Permission for API Gateway
+  StatsFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref StatsFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:\
+        ${AWS::AccountId}:${ApiGateway}/*/GET/api/stats"
 
   # API Gateway Deployment
   ApiDeployment:
     Type: AWS::ApiGateway::Deployment
-    DependsOn: ApiMethod
+    DependsOn:
+      - SubmitNumberMethod
+      - StatsMethod
     Properties:
       RestApiId: !Ref ApiGateway
       StageName: prod
+      Description: !Sub "Deployment for ${AWS::StackName} with\
+        submit-number and stats endpoints"
 
   # CloudFront Distribution
   CloudFrontDistribution:
@@ -216,7 +301,6 @@ Resources:
             DomainName: !Sub "${ApiGateway}.execute-api.${AWS::Region}\
               .amazonaws.com"
             CustomOriginConfig:
-              HTTPPort: 80
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
             OriginPath: /prod
@@ -241,9 +325,10 @@ Resources:
               - GET
               - HEAD
             CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+            OriginRequestPolicyId: !Ref ApiOriginRequestPolicy
         DefaultRootObject: index.html
         Enabled: true
+        IPV6Enabled: true
         PriceClass: PriceClass_100
 
   # AWS Budget for cost monitoring
@@ -276,6 +361,10 @@ Outputs:
     Description: S3 Bucket for static content
     Value: !Ref StaticContentBucket
 
-  APILambdaName:
-    Description: Lambda function name for API
-    Value: !Ref ApiFunction
+  SubmitNumberFunctionName:
+    Description: Lambda function name for submit-number function
+    Value: !Ref SubmitNumberFunction
+
+  StatsFunctionName:
+    Description: Lambda function name for stats function
+    Value: !Ref StatsFunction
