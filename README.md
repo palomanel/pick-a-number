@@ -29,9 +29,8 @@ All of the components are contained in this repo including:
   hooks, and CI/CD workflows
 
 If you have an [AWS Free Tier](https://aws.amazon.com/free/) account and don't
-exceed the thresholds for the services being used your consumption
-will be **zero**, so this project is a great way to get your feet wet using
-cloud infrastructure.
+exceed resource thresholds your consumption will be **zero**, so this
+project is a great way to get your feet wet using AWS cloud infrastructure.
 
 ## Usage
 
