@@ -1,0 +1,56 @@
+# Requirements
+# - graphviz installed on the system for rendering the diagram
+# - diagrams library installed in the Python environment (pip install diagrams)
+from diagrams import Cluster, Diagram, Edge
+from diagrams.aws.general import User
+from diagrams.aws.network import CloudFront
+from diagrams.aws.storage import S3
+from diagrams.aws.network import APIGateway
+from diagrams.aws.compute import Lambda
+from diagrams.aws.database import Dynamodb
+
+graph_attr = {
+    "layout": "dot",
+    "compound": "true",
+    "pad": "0.5",
+}
+
+with Diagram(
+    "pick-a-number\nSample JAMstack architecture",
+    filename="jamstack-architecture",
+    show=False,
+    graph_attr=graph_attr,
+):
+    user = User("User")
+
+    with Cluster("AWS Cloud", graph_attr={"pad": "2"}):
+
+        with Cluster("Frontend Layer"):
+            cloudfront = CloudFront("CloudFront\nDistribution")
+            s3 = S3("Static Website\nS3 Bucket")
+
+        with Cluster("API Layer"):
+            api_gateway = APIGateway("API Gateway")
+            submit_number_lambda = Lambda("SubmitNumber\nLambda function")
+            daily_stats_lambda = Lambda("DailyStats\nLambda function")
+
+        with Cluster("Data Layer"):
+            dynamodb = Dynamodb("DynamoDB\nTable")
+
+    user >> cloudfront
+    cloudfront >> Edge(label="/", minlen="2") >> s3
+    cloudfront >> Edge(label="/api", minlen="2") >> api_gateway
+    (
+        api_gateway
+        >> Edge(label="/api/submit-number", minlen="2")
+        >> submit_number_lambda
+        >> Edge(minlen="2")
+        >> dynamodb
+    )
+    (
+        api_gateway
+        >> Edge(label="/api/daily-stats", minlen="2")
+        >> daily_stats_lambda
+        >> Edge(minlen="2")
+        >> dynamodb
+    )
