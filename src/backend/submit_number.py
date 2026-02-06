@@ -3,6 +3,8 @@ import boto3
 import uuid
 import os
 import logging
+import datetime
+from datetime import date, datetime, timezone, time
 from decimal import Decimal
 
 logger = logging.getLogger()
@@ -19,7 +21,10 @@ def handler(event, context):
 
         # Get payload from event
         payload = json.loads(event["body"])
-        logger.info(f"Parsed body: {payload}")
+        event_datetime = datetime.strptime(
+            event["requestContext"]["requestTime"], "%d/%b/%Y:%H:%M:%S %z"
+        )
+        logger.info(f"Parsed body: {json.dumps(payload)}")
 
         # Convert floats to Decimals for DynamoDB compatibility
         # Also handle the case where location might be None
@@ -36,18 +41,17 @@ def handler(event, context):
             }
         )
 
-        item_id = str(uuid.uuid4())
-
         table.put_item(
             Item={
-                "id": item_id,
+                "event_date": event_datetime.date().isoformat(),
+                "event_datetime": event_datetime.isoformat(),
                 "number": payload["number"],
-                "timestamp": payload["timestamp"],
+                "client_timestamp": payload["timestamp"],
                 "location": location,
             }
         )
 
-        logger.info(f"Successfully stored item {item_id} in DynamoDB")
+        logger.info(f"Successfully stored item in DynamoDB, SK: {event_datetime}")
 
         return {
             "statusCode": 200,
@@ -55,7 +59,9 @@ def handler(event, context):
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
             },
-            "body": json.dumps({"id": item_id, "status": "success"}),
+            "body": json.dumps(
+                {"datetime": event_datetime.isoformat(), "status": "success"}
+            ),
         }
     except json.JSONDecodeError as e:
         logger.error(f"JSON decode error: {str(e)}, event body: {event.get('body')}")
