@@ -40,10 +40,23 @@ The main objectives when designing this architecture have been:
   Using DynamoDB has the downside of the caller code needing to aggregate the
   data when doing a range query.
 
-### Compliance Layer
+### Management Layer
 
-- **Amazon S3**: logs for all components are forwarded to an S3 bucket and
-  retained for a configurable period.
+- **Logging**:
+  - **Amazon S3** and **CloudFront** logs can be only delivered to S3,
+    a "logs" bucket was added for this purpose together with a lifecycle policy
+    with the desired retention period. Typically in a production system these
+    events will be forwarded to a
+    [SIEM](https://en.wikipedia.org/wiki/Security_information_and_event_management)
+    system.
+  - **Application** level logs that need real-time monitoring
+    (API Gateway and Lambda) are delivered to Cloudwatch, the same retention
+    period is applied.
+- **Backups**:
+  - **~~DynamoDB Point-in-Time Recovery (PITR)~~** is not included in the AWS
+    Free Tier and incurs additional charges so it's **not part of the
+    architecture**. Possible alternatives would be manually creating backups
+    or automating on a schedule using EventBridge + Lambda.
 
 ## Request Flow
 
@@ -63,6 +76,5 @@ The main objectives when designing this architecture have been:
 - **Global CDN**: CloudFront edge locations worldwide cache content close
   to the user and provide DDoS protection
 - **Reliability**: Multi-AZ deployment with AWS managed services
-- **Compliance**: Auditability for all system components with log forwarding
-  and retention
+- **Auditable**: log forwarding and retention for all system components
 - **FinOps optimized**: Pay-per-use pricing model and budget notifications
