@@ -8,6 +8,7 @@ from diagrams.aws.storage import S3
 from diagrams.aws.network import APIGateway
 from diagrams.aws.compute import Lambda
 from diagrams.aws.database import Dynamodb
+from diagrams.aws.management import CloudwatchLogs
 
 graph_attr = {
     "layout": "dot",
@@ -37,6 +38,10 @@ with Diagram(
         with Cluster("Data Layer"):
             dynamodb = Dynamodb("DynamoDB\nTable")
 
+        with Cluster("Management\nLayer"):
+            logs = S3("Logs\nS3 Bucket")
+            cloudwatch = CloudwatchLogs("CloudWatch\nLogs")
+
     user >> cloudfront
     cloudfront >> Edge(label="/", minlen="2") >> s3
     cloudfront >> Edge(label="/api", minlen="2") >> api_gateway
@@ -54,3 +59,9 @@ with Diagram(
         >> Edge(minlen="2")
         >> dynamodb
     )
+
+    cloudfront >> Edge(style="dashed") >> logs
+    s3 >> Edge(style="dashed") >> logs
+    api_gateway >> Edge(style="dashed") >> cloudwatch
+    submit_number_lambda >> Edge(style="dashed") >> cloudwatch
+    daily_stats_lambda >> Edge(style="dashed") >> cloudwatch
