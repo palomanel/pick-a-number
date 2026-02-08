@@ -18,18 +18,20 @@ fi
 
 echo "Starting destruction of stack: ${STACK_NAME}"
 
-# Get the S3 bucket name
-echo "Retrieving S3 bucket name..."
-BUCKET_NAME=$(aws cloudformation describe-stacks \
-    --stack-name "${STACK_NAME}" \
-    --region "${REGION}" \
-    --query 'Stacks[0].Outputs[?OutputKey==`S3BucketName`].OutputValue' \
+# Get all S3 buckets with the stack name prefix
+echo "Finding S3 buckets with prefix: ${STACK_NAME}"
+BUCKETS=$(aws s3api list-buckets \
+    --query "Buckets[?starts_with(Name, '${STACK_NAME}')].Name" \
     --output text 2>/dev/null || echo "")
 
-# Empty the S3 bucket if it exists (required before deletion)
-if [[ -n "${BUCKET_NAME}" ]]; then
-    echo "Emptying S3 bucket: ${BUCKET_NAME}"
-    aws s3 rm "s3://${BUCKET_NAME}" --recursive --region "${REGION}" || true
+# Empty all matching buckets
+if [[ -n "${BUCKETS}" ]]; then
+    for BUCKET in ${BUCKETS}; do
+        echo "Emptying S3 bucket: ${BUCKET}"
+        aws s3 rm "s3://${BUCKET}" --recursive --region "${REGION}" || true
+    done
+else
+    echo "No S3 buckets found with prefix: ${STACK_NAME}"
 fi
 
 # Delete the CloudFormation stack

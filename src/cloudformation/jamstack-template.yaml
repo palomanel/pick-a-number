@@ -9,6 +9,12 @@ Parameters:
     Description: Email address for AWS budget notifications
     AllowedPattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     ConstraintDescription: Must be a valid email address
+  LogRetentionDays:
+    Type: Number
+    Description: Number of days to retain logs
+    Default: 90
+    MinValue: 1
+    MaxValue: 3650
 # This is here as a placeholder for future domain name integration
 # Deactivated for now to silence warnings
 #   DomainName:
@@ -17,6 +23,57 @@ Parameters:
 #     Default: example.com
 
 Resources:
+  # S3 Bucket for logs
+  LogsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-logs"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldLogs
+            Status: Enabled
+            ExpirationInDays: !Ref LogRetentionDays
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+
+  AccessLogsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LogsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: S3ServerAccessLogsPolicy
+            Effect: Allow
+            Principal:
+              Service: logging.s3.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub "${LogsBucket.Arn}/static-content-logs/*"
+            Condition:
+              StringEquals:
+                "aws:SourceAccount": !Ref AWS::AccountId
+          - Sid: CloudFrontAccessLogsPolicy
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub "${LogsBucket.Arn}/cloudfront-logs/*"
+            Condition:
+              StringEquals:
+                "aws:SourceAccount": !Ref AWS::AccountId
+
   # S3 Bucket for static content
   StaticContentBucket:
     Type: AWS::S3::Bucket
@@ -24,7 +81,9 @@ Resources:
     UpdateReplacePolicy: Delete
     Properties:
       BucketName: !Sub "${AWS::StackName}-static-content"
-      # TODO: Set the LoggingConfiguration
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LogsBucket
+        LogFilePrefix: static-content-logs/
       # TODO: Set the VersioningConfiguration
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -292,6 +351,10 @@ Resources:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
+        Logging:
+          Bucket: !GetAtt LogsBucket.DomainName
+          Prefix: cloudfront-logs/
+          IncludeCookies: false
         Origins:
           - Id: S3Origin
             DomainName: !GetAtt StaticContentBucket.RegionalDomainName

@@ -6,12 +6,14 @@ This architecture implements a JAMstack (JavaScript, APIs, Markup) application
 on AWS, providing a scalable, serverless solution where static content and APIs
 are accessible from the same domain using different URI patterns.
 
-The two main objectives when designing this architecture have been:
+The main objectives when designing this architecture have been:
 
-- provide a full working example with a frontend, data storage, and
-  data retrieval and analysis
-- leverage the AWS free tier to create and run the app without inferring any
-  costs
+1. provide a full working example with a frontend, data storage, and
+   data retrieval and analysis
+1. leverage the AWS free tier to create and run the app without inferring any
+   costs
+1. apply best practices that would be necessary for a production environment
+   whenever possible
 
 ![JAMstack Architecture](assets/jamstack-architecture.png)
 
@@ -39,6 +41,11 @@ The two main objectives when designing this architecture have been:
   Using DynamoDB has the downside of the caller code needing to aggregate the
   data when doing a range query.
 
+### Compliance Layer
+
+- **Amazon S3**: logs for all components are forwarded to an S3 bucket and
+  retained for a configurable period.
+
 ## Request Flow
 
 1. **Static Content**: `/` → CloudFront → S3
@@ -57,4 +64,5 @@ The two main objectives when designing this architecture have been:
 - **Global CDN**: CloudFront edge locations worldwide cache content close
   to the user and provide DDoS protection
 - **Reliability**: Multi-AZ deployment with AWS managed services
+- **Compliance**: Auditability for all system components with log retention
 - **FinOps optimized**: Pay-per-use pricing model and budget notifications
