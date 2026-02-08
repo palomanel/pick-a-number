@@ -12,8 +12,7 @@ The main objectives when designing this architecture have been:
    data retrieval and analysis
 1. leverage the AWS free tier to create and run the app without inferring any
    costs
-1. apply best practices that would be necessary for a production environment
-   whenever possible
+1. apply best practices whenever possible
 
 ![JAMstack Architecture](assets/jamstack-architecture.png)
 
@@ -64,5 +63,6 @@ The main objectives when designing this architecture have been:
 - **Global CDN**: CloudFront edge locations worldwide cache content close
   to the user and provide DDoS protection
 - **Reliability**: Multi-AZ deployment with AWS managed services
-- **Compliance**: Auditability for all system components with log retention
+- **Compliance**: Auditability for all system components with log forwarding
+  and retention
 - **FinOps optimized**: Pay-per-use pricing model and budget notifications
