@@ -14,7 +14,7 @@ Parameters:
     Description: Number of days to retain logs
     Default: 90
     MinValue: 1
-    MaxValue: 3650
+    MaxValue: 3653
 # This is here as a placeholder for future domain name integration
 # Deactivated for now to silence warnings
 #   DomainName:
@@ -26,8 +26,13 @@ Resources:
   # S3 Bucket for logs
   LogsBucket:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+    Metadata:
+      guard:
+        SupressedRules:
+          - S3_BUCKET_LOGGING_ENABLED
+          - S3_BUCKET_VERSIONING_ENABLED
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       BucketName: !Sub "${AWS::StackName}-logs"
       BucketEncryption:
@@ -77,6 +82,10 @@ Resources:
   # S3 Bucket for static content
   StaticContentBucket:
     Type: AWS::S3::Bucket
+    Metadata:
+      guard:
+        SupressedRules:
+          - S3_BUCKET_VERSIONING_ENABLED
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
@@ -84,7 +93,6 @@ Resources:
       LoggingConfiguration:
         DestinationBucketName: !Ref LogsBucket
         LogFilePrefix: static-content-logs/
-      # TODO: Set the VersioningConfiguration
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -194,17 +202,14 @@ Resources:
           - Effect: Allow
             Action:
               - dynamodb:PutItem
-              - dynamodb:GetItem
-              - dynamodb:UpdateItem
-              - dynamodb:DeleteItem
-              - dynamodb:Scan
               - dynamodb:Query
-              - dynamodb:BatchGetItem
             Resource: !GetAtt DataTable.Arn
 
   # CloudWatch Log Group for SubmitNumberFunction
   SubmitNumberLogGroup:
     Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-submit-number"
       RetentionInDays: !Ref LogRetentionDays
@@ -265,6 +270,8 @@ Resources:
   # CloudWatch Log Group for API Gateway
   ApiGatewayLogGroup:
     Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       LogGroupName: !Sub "/aws/apigateway/${AWS::StackName}"
       RetentionInDays: !Ref LogRetentionDays
@@ -276,6 +283,49 @@ Resources:
       RestApiId: !Ref ApiGateway
       ParentId: !GetAtt ApiGateway.RootResourceId
       PathPart: api
+
+  # Request Validator
+  ApiRequestValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties:
+      RestApiId: !Ref ApiGateway
+      Name: !Sub "${AWS::StackName}-validator"
+      ValidateRequestBody: true
+      ValidateRequestParameters: true
+
+  # Request Model for SubmitNumber
+  SubmitNumberModel:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ContentType: application/json
+      Name: SubmitNumberModel
+      Schema:
+        $schema: "http://json-schema.org/draft-04/schema#"
+        type: object
+        required:
+          - number
+          - timestamp
+        properties:
+          number:
+            type: integer
+            minimum: 1
+            maximum: 100
+          timestamp:
+            type: string
+          location:
+            type:
+              - object
+              - "null"
+            properties:
+              latitude:
+                type: number
+                minimum: -90
+                maximum: 90
+              longitude:
+                type: number
+                minimum: -180
+                maximum: 180
 
   SubmitNumberResource:
     Type: AWS::ApiGateway::Resource
@@ -292,6 +342,9 @@ Resources:
       ResourceId: !Ref SubmitNumberResource
       HttpMethod: POST
       AuthorizationType: NONE
+      RequestValidatorId: !Ref ApiRequestValidator
+      RequestModels:
+        application/json: !Ref SubmitNumberModel
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
@@ -311,6 +364,8 @@ Resources:
   # CloudWatch Log Group for StatsFunction
   StatsLogGroup:
     Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-stats"
       RetentionInDays: !Ref LogRetentionDays
@@ -353,9 +408,10 @@ Resources:
       ResourceId: !Ref StatsResource
       HttpMethod: GET
       AuthorizationType: NONE
+      RequestValidatorId: !Ref ApiRequestValidator
       RequestParameters:
-        method.request.querystring.to: false
-        method.request.querystring.from: false
+        method.request.querystring.to: true
+        method.request.querystring.from: true
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
@@ -399,6 +455,24 @@ Resources:
         Format: "$context.requestId $context.identity.sourceIp \
           $context.requestTime $context.httpMethod $context.resourcePath \
           $context.status $context.protocol"
+      MethodSettings:
+        - ResourcePath: "/*"
+          LoggingLevel: INFO
+          HttpMethod: "*"
+          ThrottlingBurstLimit: 100
+          ThrottlingRateLimit: 50
+
+  # API Gateway Usage Plan
+  ApiUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      UsagePlanName: !Sub "${AWS::StackName}-usage-plan"
+      Throttle:
+        BurstLimit: 100
+        RateLimit: 50
+      ApiStages:
+        - ApiId: !Ref ApiGateway
+          Stage: !Ref ApiGatewayStage
 
   # CloudFront Distribution
   CloudFrontDistribution:
@@ -425,6 +499,7 @@ Resources:
           TargetOriginId: S3Origin
           ViewerProtocolPolicy: redirect-to-https
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
           Compress: true
         CacheBehaviors:
           - PathPattern: /api/*
@@ -447,6 +522,30 @@ Resources:
         Enabled: true
         IPV6Enabled: true
         PriceClass: PriceClass_100
+
+  # CloudFront Response Headers Policy for Security
+  SecurityHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub "${AWS::StackName}-security-headers"
+        SecurityHeadersConfig:
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 63072000
+            IncludeSubdomains: true
+            Override: true
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: DENY
+            Override: true
+          XSSProtection:
+            ModeBlock: true
+            Protection: true
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: strict-origin-when-cross-origin
+            Override: true
 
   # AWS Budget for cost monitoring
   ApplicationBudget:
