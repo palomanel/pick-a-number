@@ -24,7 +24,8 @@ The main objectives when designing this architecture have been:
   overhead.
 - **Secure**: Unified access through CloudFront routing, edge locations
   worldwide cache content close to the user and provide DDoS protection.
-  Network isolation and IAM protect backend services.
+  Multi-layer protection for backend services: network isolation, rate limiting
+  and IAM.
 - **Auditable**: Log forwarding and retention for all system components.
 - **Cost efficient**: Pay-per-use pricing model for all services, with
   budget notifications for ongoing cost control.
@@ -44,7 +45,8 @@ The main objectives when designing this architecture have been:
 ### API Layer
 
 - **Amazon API Gateway**: manages the RESTful API endpoints under `/api/*`
-  path.
+  path. Rate limiting is in place to prevent abuse and protect the Lambda
+  functions.
 - **AWS Lambda**: Serverless functions for JSON payload processing, Lambda
   was used for simplicity, on a real app the compute could be replaced for
   another pay-as-you-go resource like ECS Fargate.

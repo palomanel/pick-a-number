@@ -400,6 +400,24 @@ Resources:
         Format: "$context.requestId $context.identity.sourceIp \
           $context.requestTime $context.httpMethod $context.resourcePath \
           $context.status $context.protocol"
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          ThrottlingBurstLimit: 100
+          ThrottlingRateLimit: 50
+
+  # API Gateway Usage Plan
+  ApiUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn: ApiGatewayStage
+    Properties:
+      UsagePlanName: !Sub "${AWS::StackName}-usage-plan"
+      Throttle:
+        BurstLimit: 100
+        RateLimit: 50
+      ApiStages:
+        - ApiId: !Ref ApiGateway
+          Stage: !Ref ApiGatewayStage
 
   # CloudFront Distribution
   CloudFrontDistribution:
