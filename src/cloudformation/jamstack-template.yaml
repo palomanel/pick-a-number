@@ -214,6 +214,7 @@ Resources:
       Runtime: python3.14
       Handler: submit_number.handler
       Role: !GetAtt LambdaExecutionRole.Arn
+      ReservedConcurrentExecutions: 10
       Environment:
         Variables:
           TABLE_NAME: !Ref DataTable
@@ -365,6 +366,7 @@ Resources:
       Runtime: python3.14
       Handler: stats.handler
       Role: !GetAtt LambdaExecutionRole.Arn
+      ReservedConcurrentExecutions: 5
       Environment:
         Variables:
           TABLE_NAME: !Ref DataTable
