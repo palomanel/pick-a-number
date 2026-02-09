@@ -10,7 +10,7 @@ The main objectives when designing this architecture have been:
 
 1. provide a full working example with a frontend, data storage, and
    data retrieval and analysis
-1. leverage the AWS free tier to create and run the app without inferring any
+1. leverage the AWS free tier to create and run the app without incurring any
    costs
 1. apply best practices whenever possible
 
@@ -56,7 +56,8 @@ The main objectives when designing this architecture have been:
   - **~~DynamoDB Point-in-Time Recovery (PITR)~~** is not included in the AWS
     Free Tier and incurs additional charges so it's **not part of the
     architecture**. Possible alternatives would be manually creating backups
-    or automating on a schedule using EventBridge + Lambda.
+    or automating on a schedule using EventBridge + Lambda. No other component
+    needs backups as everything else can be restored from source.
 
 ## Request Flow
 
@@ -76,5 +77,5 @@ The main objectives when designing this architecture have been:
 - **Global CDN**: CloudFront edge locations worldwide cache content close
   to the user and provide DDoS protection
 - **Reliability**: Multi-AZ deployment with AWS managed services
-- **Auditable**: log forwarding and retention for all system components
-- **FinOps optimized**: Pay-per-use pricing model and budget notifications
+- **Auditability**: log forwarding and retention for all system components
+- **FinOps optimization**: Pay-per-use pricing model and budget notifications
