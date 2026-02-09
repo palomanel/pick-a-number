@@ -38,7 +38,8 @@ The main objectives when designing this architecture have been:
   is not available from the free tier but should be in place for a production-
   ready architecture.
 - **Amazon S3**: Very cost efficient storage to host static assets (HTML, CSS,
-  JavaScript bundles).
+  JavaScript bundles). Versioning is enabled as it protects against accidental
+  deletions and malicious modifications.
 
 ### API Layer
 
