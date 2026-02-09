@@ -278,6 +278,49 @@ Resources:
       ParentId: !GetAtt ApiGateway.RootResourceId
       PathPart: api
 
+  # Request Validator
+  ApiRequestValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties:
+      RestApiId: !Ref ApiGateway
+      Name: !Sub "${AWS::StackName}-validator"
+      ValidateRequestBody: true
+      ValidateRequestParameters: true
+
+  # Request Model for SubmitNumber
+  SubmitNumberModel:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ContentType: application/json
+      Name: SubmitNumberModel
+      Schema:
+        $schema: "http://json-schema.org/draft-04/schema#"
+        type: object
+        required:
+          - number
+          - timestamp
+        properties:
+          number:
+            type: integer
+            minimum: 1
+            maximum: 100
+          timestamp:
+            type: string
+          location:
+            type:
+              - object
+              - "null"
+            properties:
+              latitude:
+                type: number
+                minimum: -90
+                maximum: 90
+              longitude:
+                type: number
+                minimum: -180
+                maximum: 180
+
   SubmitNumberResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -293,6 +336,9 @@ Resources:
       ResourceId: !Ref SubmitNumberResource
       HttpMethod: POST
       AuthorizationType: NONE
+      RequestValidatorId: !Ref ApiRequestValidator
+      RequestModels:
+        application/json: !Ref SubmitNumberModel
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
@@ -354,9 +400,10 @@ Resources:
       ResourceId: !Ref StatsResource
       HttpMethod: GET
       AuthorizationType: NONE
+      RequestValidatorId: !Ref ApiRequestValidator
       RequestParameters:
-        method.request.querystring.to: false
-        method.request.querystring.from: false
+        method.request.querystring.to: true
+        method.request.querystring.from: true
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
