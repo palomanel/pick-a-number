@@ -8,19 +8,35 @@ are accessible from the same domain using different URI patterns.
 
 The main objectives when designing this architecture have been:
 
-1. provide a full working example with a frontend, data storage, and
+1. provide a full working app example with a frontend, data storage, and
    data retrieval and analysis
-1. leverage the AWS free tier to create and run the app without incurring any
+2. leverage the AWS free tier to create and run the app without incurring any
    costs
-1. apply best practices whenever possible
+3. apply best practices whenever possible, objective 2 entails avoiding some
+   services and patterns, this is discussed below
 
 ![JAMstack Architecture](assets/jamstack-architecture.png)
+
+## Key Features
+
+- **Reliable**: Multi-AZ deployment with AWS serverless managed services,
+  providing auto-scaling and high availability with minimal operational
+  overhead.
+- **Secure**: Unified access through CloudFront routing, edge locations
+  worldwide cache content close to the user and provide DDoS protection.
+  Network isolation and IAM protect backend services.
+- **Auditable**: Log forwarding and retention for all system components.
+- **Cost efficient**: Pay-per-use pricing model for all services, with
+  budget notifications for ongoing cost control.
 
 ## Architecture Components
 
 ### Frontend Layer
 
-- **Amazon CloudFront**: CDN for global content delivery and request routing.
+- **Amazon CloudFront**: [CDN](https://aws.amazon.com/cloudfront/) for global
+  content delivery and request routing, [AWS WAF](https://aws.amazon.com/waf/)
+  is not available from the free tier but should be in place for a production-
+  ready architecture.
 - **Amazon S3**: Very cost efficient storage to host static assets (HTML, CSS,
   JavaScript bundles).
 
@@ -54,8 +70,8 @@ The main objectives when designing this architecture have been:
     period is applied.
 - **Backups**:
   - **~~DynamoDB Point-in-Time Recovery (PITR)~~** is not included in the AWS
-    Free Tier and incurs additional charges so it's **not part of the
-    architecture**. Possible alternatives would be manually creating backups
+    Free Tier and incurs additional charges so it's not part of the
+    architecture. Possible alternatives would be manually creating backups
     or automating on a schedule using EventBridge + Lambda. No other component
     needs backups as everything else can be restored from source.
 
@@ -67,15 +83,3 @@ The main objectives when designing this architecture have been:
       accepts a paylod that is persisted in DynamoDB.
    1. `GET /api/daily-stats`, handled by the `DailyStatsFunction` Lambda,
       scans DynamoDB for a date range and returns statistics.
-
-## Key Features
-
-- **Single Domain**: Unified access through CloudFront routing
-- **Serverless**: Minimal operational overhead and Multi-AZ deployment with AWS
-  managed services
-- **Auto-scaling**: Handles traffic spikes automatically
-- **Global CDN**: CloudFront edge locations worldwide cache content close
-  to the user and provide DDoS protection
-- **Reliability**: Multi-AZ deployment with AWS managed services
-- **Auditability**: log forwarding and retention for all system components
-- **FinOps optimization**: Pay-per-use pricing model and budget notifications

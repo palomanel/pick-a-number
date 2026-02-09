@@ -12,8 +12,8 @@
 [![Python](https://img.shields.io/badge/Python-3.14+-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue.svg)](https://semver.org/)
 
-A sample **JAMstack** app. More details about the architecture are provided
-in [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+A sample **JAMstack** app, read more about the project's objectives and design
+decisions in the [architecture documentation](docs/ARCHITECTURE.md).
 
 ## Overview
 
