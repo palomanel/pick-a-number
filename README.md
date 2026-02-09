@@ -12,8 +12,8 @@
 [![Python](https://img.shields.io/badge/Python-3.14+-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue.svg)](https://semver.org/)
 
-A sample **JAMstack** app. More details about the architecture are provided
-in [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+A sample **JAMstack** app, read more about the project's objectives and design
+decisions in the [architecture documentation](docs/ARCHITECTURE.md).
 
 ## Overview
 
@@ -23,6 +23,8 @@ All of the components are contained in this repo including:
 
 - **Frontend**, a one page web app using HTML and vanilla JavaScript
 - **Backend**, a data ingestion REST API and persistence layer
+- **Management**, logging for all components, including a log
+  retention policy
 - **Infrastructure-as-Code**, a CloudFormation template that deploys the
   AWS infrastructure, including an AWS Budget
 - **CI/CD and tooling**, a `devcontainer` configuration, local `pre-commit`
