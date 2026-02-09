@@ -195,12 +195,7 @@ Resources:
           - Effect: Allow
             Action:
               - dynamodb:PutItem
-              - dynamodb:GetItem
-              - dynamodb:UpdateItem
-              - dynamodb:DeleteItem
-              - dynamodb:Scan
               - dynamodb:Query
-              - dynamodb:BatchGetItem
             Resource: !GetAtt DataTable.Arn
 
   # CloudWatch Log Group for SubmitNumberFunction

@@ -25,7 +25,9 @@ The main objectives when designing this architecture have been:
 - **Secure**: Unified access through CloudFront routing, edge locations
   worldwide cache content close to the user and provide DDoS protection.
   Multi-layer protection for backend services: network isolation, request
-  validation, rate limiting, and IAM.
+  validation, rate limiting, and IAM permissions following the
+  [princple of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege)
+  .
 - **Auditable**: Log forwarding and retention for all system components.
 - **Cost efficient**: Pay-per-use pricing model for all services, with
   budget notifications for ongoing cost control.
