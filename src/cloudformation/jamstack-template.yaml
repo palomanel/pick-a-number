@@ -222,6 +222,8 @@ Resources:
       # TODO: set VPC configuration if needed
       Runtime: python3.14
       Handler: submit_number.handler
+      Architectures:
+        - arm64
       Role: !GetAtt LambdaExecutionRole.Arn
       Environment:
         Variables:
@@ -377,6 +379,8 @@ Resources:
       FunctionName: !Sub "${AWS::StackName}-stats"
       Runtime: python3.14
       Handler: stats.handler
+      Architectures:
+        - arm64
       Role: !GetAtt LambdaExecutionRole.Arn
       Environment:
         Variables:
