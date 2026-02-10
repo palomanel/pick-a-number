@@ -51,7 +51,9 @@ The main objectives when designing this architecture have been:
   functions.
 - **AWS Lambda**: Serverless functions for JSON payload processing, Lambda
   was used for simplicity, on a real app the compute could be replaced for
-  another pay-as-you-go resource like ECS Fargate.
+  another pay-as-you-go resource like ECS Fargate. The `arm64` architecture
+  is used, which means the compute will run on
+  [AWS Graviton](https://aws.amazon.com/ec2/graviton/) for cost efficiency.
 
 ### Data Layer
 
