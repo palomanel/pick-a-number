@@ -6,6 +6,10 @@ import logging
 import datetime
 from datetime import date, datetime, timezone, time
 from decimal import Decimal
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
+patch_all()
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
