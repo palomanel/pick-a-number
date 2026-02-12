@@ -1,0 +1,6 @@
+# aws-xray-sdk is required (not included in Lambda runtime)
+aws-xray-sdk
+
+# boto3 is pre-installed in Lambda runtime, but you can pin versions if needed:
+# boto3>=1.26.0
+# botocore>=1.29.0

@@ -1,0 +1,6 @@
+# Development dependencies (for local testing)
+boto3
+botocore
+aws-xray-sdk
+pytest
+moto  # for mocking AWS services in tests
