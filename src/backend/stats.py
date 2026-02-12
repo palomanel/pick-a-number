@@ -43,10 +43,7 @@ def handler(event, context):
 
         return {
             "statusCode": 200,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
+            "headers": {"Content-Type": "application/json"},
             "body": json.dumps(
                 {
                     "from": from_date.isoformat(),
@@ -61,9 +58,6 @@ def handler(event, context):
         logger.error(f"Unexpected error: {str(e)}", exc_info=True)
         return {
             "statusCode": 500,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
+            "headers": {"Content-Type": "application/json"},
             "body": json.dumps({"error": str(e)}),
         }
