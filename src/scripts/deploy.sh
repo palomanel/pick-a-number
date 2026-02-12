@@ -4,7 +4,11 @@
 # This script deploys all the app components:
 # infrastructure, frontend, and backend
 
+# exit immediately if a command exits with a non-zero status
 set -e
+
+# Cleanup on exit
+trap 'rm -rf ../backend/dist 2>/dev/null' EXIT
 
 TEMPLATE_FILE="../cloudformation/jamstack-template.yaml"
 FRONTEND_DIR="frontend"
@@ -32,20 +36,49 @@ echo "Uploading static content to S3 bucket: ${BUCKET_NAME}"
 aws s3 sync "../${FRONTEND_DIR}" "s3://${BUCKET_NAME}" --delete
 
 cd ../backend
+echo "Creating Lambda layer for Python dependencies..."
+mkdir -p dist/python
+pip install -r requirements.txt -t dist/python --quiet --disable-pip-version-check
+cd dist
+zip -rq dependencies-layer.zip python
+LAYER_ARN=$(aws lambda publish-layer-version \
+    --layer-name "${STACK_NAME}-dependencies" \
+    --description "Python dependencies for ${STACK_NAME}" \
+    --zip-file fileb://dependencies-layer.zip \
+    --compatible-runtimes python3.14 \
+    --region "${REGION}" \
+    --query "LayerVersionArn" \
+    --output text)
+
+echo "Layer published: ${LAYER_ARN}"
+cd ..
+
+echo "Packaging and deploying backend Lambda functions..."
 while read FUNCTION SOURCE; do
     FUNCTION_NAME=$(aws cloudformation describe-stacks \
         --stack-name "${STACK_NAME}" \
         --query "Stacks[0].Outputs[?OutputKey==\`${FUNCTION}\`].OutputValue" \
         --output text)
+
+    # Attach layer first (idempotent - safe to run every time)
+    echo "Attaching layer to ${FUNCTION_NAME}"
+    aws lambda update-function-configuration \
+        --function-name "${FUNCTION_NAME}" \
+        --layers "${LAYER_ARN}" \
+        --region "${REGION}" \
+        --output text > /dev/null
+
+    aws lambda wait function-updated --function-name "${FUNCTION_NAME}" --region "${REGION}"
+
+    # Now update code
     echo "Updating Lambda function code for ${FUNCTION_NAME}"
-    zip -rq "${FUNCTION}.zip" "${SOURCE}"
+    zip -rq "dist/${FUNCTION}.zip" "${SOURCE}"
     REVISION_ID=$(aws lambda update-function-code \
         --function-name "${FUNCTION_NAME}" \
-        --zip-file fileb://"${FUNCTION}.zip" \
+        --zip-file fileb://dist/"${FUNCTION}.zip" \
         --query "RevisionId" \
         --output text)
     echo "Lambda function ${FUNCTION_NAME} updated successfully, Revision ID: ${REVISION_ID}"
-    rm "${FUNCTION}.zip"
 done << EOF
 SubmitNumberFunctionName submit_number.py
 StatsFunctionName stats.py

@@ -23,8 +23,8 @@ All of the components are contained in this repo including:
 
 - **Frontend**, a one page web app using HTML and vanilla JavaScript
 - **Backend**, a data ingestion REST API and persistence layer
-- **Management**, logging for all components, including a log
-  retention policy
+- **Management**, logging for all components,
+  X-ray tracing is also enabled
 - **Infrastructure-as-Code**, a CloudFormation template that deploys the
   AWS infrastructure, including an AWS Budget
 - **CI/CD and tooling**, a `devcontainer` configuration, local `pre-commit`

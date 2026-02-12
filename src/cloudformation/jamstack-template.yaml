@@ -190,6 +190,7 @@ Resources:
       ManagedPolicyArns:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role\
           /AWSLambdaBasicExecutionRole"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AWSXRayDaemonWriteAccess"
         - !Ref DynamoDBAccessPolicy
 
   # DynamoDB Access Policy
@@ -225,6 +226,8 @@ Resources:
       Architectures:
         - arm64
       Role: !GetAtt LambdaExecutionRole.Arn
+      TracingConfig:
+        Mode: Active
       Environment:
         Variables:
           TABLE_NAME: !Ref DataTable
@@ -382,6 +385,8 @@ Resources:
       Architectures:
         - arm64
       Role: !GetAtt LambdaExecutionRole.Arn
+      TracingConfig:
+        Mode: Active
       Environment:
         Variables:
           TABLE_NAME: !Ref DataTable
@@ -454,6 +459,7 @@ Resources:
       RestApiId: !Ref ApiGateway
       DeploymentId: !Ref ApiDeployment
       StageName: prod
+      TracingEnabled: true
       AccessLogSetting:
         DestinationArn: !GetAtt ApiGatewayLogGroup.Arn
         Format: "$context.requestId $context.identity.sourceIp \
