@@ -322,6 +322,9 @@ Resources:
             type:
               - object
               - "null"
+            required:
+              - latitude
+              - longitude
             properties:
               latitude:
                 type: number

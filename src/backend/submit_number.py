@@ -40,10 +40,7 @@ def handler(event, context):
                 "longitude": Decimal(repr(payload["location"]["longitude"])),
             }
             if payload["location"] is not None
-            else {
-                "latitude": None,
-                "longitude": None,
-            }
+            else None
         )
 
         table.put_item(
