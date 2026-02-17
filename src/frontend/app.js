@@ -71,7 +71,10 @@ function getLocation() {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        resolve(position.coords);
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
       },
       (error) => {
         reject(new Error(`Geolocation error: ${error.message}`));
