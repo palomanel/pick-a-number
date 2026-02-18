@@ -96,6 +96,17 @@ aws iam create-role --role-name gh-deploy-iam-role \
     --assume-role-policy-document file:///workspaces/pick-a-number/src/scripts/gh-deploy-iam-role.json
 ```
 
+Create a
+[GitHub environment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
+and add the following environment variables,
+which will be accessible for workflows under the `vars` context:
+
+- `APP_NAME`, optional
+- `AWS_REGION`, required
+- `AWS_ROLE_ARN`, required
+- `BUDGET_EMAIL`, required
+- `ENVIRONMENT`, optional
+
 ### Using the app
 
 Upon opening the web app users will be able to pick a number between 1 and 10.
