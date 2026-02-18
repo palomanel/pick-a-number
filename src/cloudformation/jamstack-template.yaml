@@ -4,6 +4,13 @@ Description: "JAMstack Application - S3, CloudFront, API Gateway, Lambda,
   DynamoDB"
 
 Parameters:
+  Environment:
+    Type: String
+    Description: Environment name (e.g., dev, staging, prod)
+    Default: dev
+    AllowedPattern: "^[a-zA-Z][a-zA-Z0-9]*$"
+    ConstraintDescription: Must start with a letter and contain only\
+      alphanumeric characters and hyphens
   BudgetNotificationEmail:
     Type: String
     Description: Email address for AWS budget notifications
@@ -461,7 +468,7 @@ Resources:
     Properties:
       RestApiId: !Ref ApiGateway
       DeploymentId: !Ref ApiDeployment
-      StageName: prod
+      StageName: !Ref Environment
       TracingEnabled: true
       AccessLogSetting:
         DestinationArn: !GetAtt ApiGatewayLogGroup.Arn
@@ -507,7 +514,7 @@ Resources:
             CustomOriginConfig:
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
-            OriginPath: /prod
+            OriginPath: !Sub "/${Environment}"
         DefaultCacheBehavior:
           TargetOriginId: S3Origin
           ViewerProtocolPolicy: redirect-to-https
@@ -571,6 +578,9 @@ Resources:
           Unit: USD
         TimeUnit: MONTHLY
         BudgetType: COST
+        CostFilters:
+          TagKeyValue:
+            - !Sub "aws:cloudformation:stack-name$${AWS::StackName}"
       NotificationsWithSubscribers:
         - Notification:
             NotificationType: FORECASTED

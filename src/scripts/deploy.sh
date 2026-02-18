@@ -14,16 +14,24 @@ TEMPLATE_FILE="../cloudformation/jamstack-template.yaml"
 FRONTEND_DIR="frontend"
 BACKEND_DIR="backend"
 BUDGET_EMAIL="john_doe@example.com"
-STACK_NAME="jamstack-app"
+APP_NAME="pick-a-number"
+ENVIRONMENT="dev"
 REGION="eu-central-1"
 
-echo "Deploying CloudFormation stack..."
+echo "Activating cost allocation tags in Billing Console..."
+aws ce update-cost-allocation-tags-status \
+    --cost-allocation-tags-status="TagKey='aws:cloudformation:stack-name',Status=Active" \
+    --output text
+
+STACK_NAME="${APP_NAME}-${ENVIRONMENT}"
+echo "Deploying CloudFormation stack: ${STACK_NAME}"
 aws cloudformation deploy \
     --template-file "${TEMPLATE_FILE}" \
     --stack-name "${STACK_NAME}" \
     --capabilities CAPABILITY_IAM \
     --region "${REGION}" \
-    --parameter-overrides BudgetNotificationEmail="${BUDGET_EMAIL}"
+    --parameter-overrides BudgetNotificationEmail="${BUDGET_EMAIL}" Environment="${ENVIRONMENT}" \
+    --tags Environment="${ENVIRONMENT}"
 
 echo "Getting S3 bucket name..."
 BUCKET_NAME=$(aws cloudformation describe-stacks \
