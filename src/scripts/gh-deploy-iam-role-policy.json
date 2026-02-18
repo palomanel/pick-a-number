@@ -25,7 +25,14 @@
         "cloudformation:DescribeStackResources",
         "cloudformation:GetTemplate",
         "cloudformation:ValidateTemplate",
-        "cloudformation:ListStacks"
+        "cloudformation:ListStacks",
+        "cloudformation:CreateChangeSet",
+        "cloudformation:DeleteChangeSet",
+        "cloudformation:DescribeChangeSet",
+        "cloudformation:ExecuteChangeSet",
+        "cloudformation:ListChangeSets",
+        "cloudformation:GetStackPolicy",
+        "cloudformation:SetStackPolicy"
       ],
       "Resource": "*"
     },
@@ -42,7 +49,10 @@
         "lambda:PublishVersion",
         "lambda:CreateAlias",
         "lambda:UpdateAlias",
-        "lambda:GetFunctionConfiguration"
+        "lambda:GetFunctionConfiguration",
+        "lambda:AddPermission",
+        "lambda:RemovePermission",
+        "lambda:InvokeFunction"
       ],
       "Resource": "*"
     },
