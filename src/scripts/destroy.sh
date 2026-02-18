@@ -5,9 +5,11 @@
 
 set -e
 
-STACK_NAME="jamstack-app"
-REGION="eu-central-1"
+APP_NAME="pick-a-number"
+ENVIRONMENT="dev"
 
+
+STACK_NAME="${APP_NAME}-${ENVIRONMENT}"
 echo "WARNING: This will delete all resources in stack '${STACK_NAME}' including data in S3 and DynamoDB!"
 read -p "Are you sure you want to continue? (yes/no): " -r CONFIRM
 

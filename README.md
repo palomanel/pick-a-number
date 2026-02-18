@@ -23,7 +23,7 @@ All of the components are contained in this repo including:
 
 - **Frontend**, a one page web app using HTML and vanilla JavaScript
 - **Backend**, a data ingestion REST API and persistence layer
-- **Management**, logging for all components,
+- **Management**, supports several environments, logging for all components,
   X-ray tracing is also enabled
 - **Infrastructure-as-Code**, a CloudFormation template that deploys the
   AWS infrastructure, including an AWS Budget
@@ -52,8 +52,8 @@ To deploy the app follow these steps:
 1. Login to your AWS account, `aws login` with web based authentication works
    fine, no need to use tokens
 1. Review `src/scripts/deploy.sh` and change the variable defaults to your
-   liking (i.e. `STACK_NAME`, `REGION`, `BUDGET_EMAIL`), it's particularly
-   important you change `STACK_NAME` to avoid name clashes in AWS resources
+   liking, it's particularly important you check `APP_NAME` and `ENVIRONMENT`
+   to avoid name clashes in AWS resources
 1. Run the deployment script:
 
 ```bash
