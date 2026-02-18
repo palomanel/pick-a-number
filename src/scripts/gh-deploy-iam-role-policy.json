@@ -11,7 +11,7 @@
         "s3:ListBucket",
         "s3:GetBucketLocation"
       ],
-      "Resource": ["*"]
+      "Resource": "*"
     },
     {
       "Sid": "CloudFormationDeployment",
@@ -43,6 +43,16 @@
         "lambda:CreateAlias",
         "lambda:UpdateAlias",
         "lambda:GetFunctionConfiguration"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CostAllocationTagManagement",
+      "Effect": "Allow",
+      "Action": [
+        "ce:UpdateCostAllocationTagsStatus",
+        "ce:GetCostAllocationTags",
+        "ce:ListCostAllocationTags"
       ],
       "Resource": "*"
     },
