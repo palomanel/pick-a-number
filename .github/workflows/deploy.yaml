@@ -1,0 +1,30 @@
+---
+name: Deploy app using an OIDC role
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - main
+      - 19-todo-cotinuous-deployment-using-github-actions
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: main
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          audience: sts.amazonaws.com.cn
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: github-actions-deploy
+      - name: Additional steps
+        run: |
+          # Your commands that require AWS credentials
+          aws sts get-caller-identity

@@ -36,6 +36,8 @@ project is a great way to get your feet wet using AWS cloud infrastructure.
 
 ## Usage
 
+### Deploying from the CLI
+
 Everything has been built and tested inside the
 [devcontainer](.devcontainer/devcontainer.json) using
 [VS Code](https://code.visualstudio.com/),
@@ -64,6 +66,37 @@ cd src/scripts
 The deployment script will output the application endpoints, all fronted by the
 CloudFront distribution URL. Use that address on your web browser to open the
 web app.
+
+### Continuous deployment using GitHub Actions
+
+The `deploy` workflow uses OIDC to assume a deployment role, check
+[GitHub changelog: GitHub Actions: Secure cloud deployments with OpenID Connect](https://github.blog/changelog/2021-10-27-github-actions-secure-cloud-deployments-with-openid-connect/)
+for more details.
+To use GitHub's OIDC provider, you must first set up federation in your AWS
+account. This involves creating an IAM Identity Provider that trusts GitHub's
+OIDC endpoint.
+
+The first step is to
+[fork the repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo).
+
+Create the IAM Identity Provider using the AWS CLI:
+
+```bash
+aws iam create-open-id-connect-provider \
+    --url https://token.actions.githubusercontent.com \
+    --client-id-list sts.amazonaws.com
+```
+
+Review `src/scripts/gh-deploy-iam-role.json` and ensure your AWS account id
+is correct and the `sub` condition is scoped to your GitHub organization and
+repository. Then create the necessary role:
+
+```bash
+aws iam create-role --role-name gh-deploy-iam-role \
+    --assume-role-policy-document file:///workspaces/pick-a-number/src/scripts/gh-deploy-iam-role.json
+```
+
+### Using the app
 
 Upon opening the web app users will be able to pick a number between 1 and 10.
 By clicking the "Submit" button a JSON payload will be posted to the API backend

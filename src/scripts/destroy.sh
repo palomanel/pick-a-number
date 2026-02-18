@@ -8,7 +8,7 @@ set -e
 # Load environment variables or fallback to defaults
 APP_NAME="${APP_NAME:-pick-a-number}"
 ENVIRONMENT="${ENVIRONMENT:-dev}"
-REGION="${REGION:-eu-central-1}"
+AWS_REGION="${AWS_REGION:-eu-central-1}"
 
 STACK_NAME="${APP_NAME}-${ENVIRONMENT}"
 echo "WARNING: This will delete all resources in stack '${STACK_NAME}' including data in S3 and DynamoDB!"
@@ -31,7 +31,7 @@ BUCKETS=$(aws s3api list-buckets \
 if [[ -n "${BUCKETS}" ]]; then
     for BUCKET in ${BUCKETS}; do
         echo "Emptying S3 bucket: ${BUCKET}"
-        aws s3 rm "s3://${BUCKET}" --recursive --region "${REGION}" || true
+        aws s3 rm "s3://${BUCKET}" --recursive --region "${AWS_REGION}" || true
     done
 else
     echo "No S3 buckets found with prefix: ${STACK_NAME}"
@@ -41,17 +41,17 @@ fi
 echo "Deleting CloudFormation stack: ${STACK_NAME}"
 aws cloudformation delete-stack \
     --stack-name "${STACK_NAME}" \
-    --region "${REGION}"
+    --region "${AWS_REGION}"
 
 # Wait for stack deletion to complete
 echo "Waiting for stack deletion to complete..."
 aws cloudformation wait stack-delete-complete \
     --stack-name "${STACK_NAME}" \
-    --region "${REGION}" 2>/dev/null || true
+    --region "${AWS_REGION}" 2>/dev/null || true
 
 echo "Stack deletion initiated."
 echo "Destruction complete!"
 echo ""
 echo "Note: Some resources may take additional time to fully delete."
 echo "To check deletion status, run:"
-echo "  aws cloudformation describe-stacks --stack-name ${STACK_NAME} --region ${REGION}"
+echo "  aws cloudformation describe-stacks --stack-name ${STACK_NAME} --region ${AWS_REGION}"
