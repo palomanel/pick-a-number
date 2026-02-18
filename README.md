@@ -69,15 +69,26 @@ web app.
 
 ### Continuous deployment using GitHub Actions
 
+The first step is to
+[fork the repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo).
+
+Then access your repo settings and add configure the `main`
+[GitHub environment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
+Add the following environment variables,
+which will be accessible for workflows under the `vars` context:
+
+- `APP_NAME`, optional
+- `AWS_REGION`, required
+- `AWS_ROLE_ARN`, required
+- `BUDGET_EMAIL`, required
+- `ENVIRONMENT`, optional
+
 The `deploy` workflow uses OIDC to assume a deployment role, check
 [GitHub changelog: GitHub Actions: Secure cloud deployments with OpenID Connect](https://github.blog/changelog/2021-10-27-github-actions-secure-cloud-deployments-with-openid-connect/)
 for more details.
 To use GitHub's OIDC provider, you must first set up federation in your AWS
 account. This involves creating an IAM Identity Provider that trusts GitHub's
 OIDC endpoint.
-
-The first step is to
-[fork the repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo).
 
 Create the IAM Identity Provider using the AWS CLI:
 
@@ -95,17 +106,6 @@ repository. Then create the necessary role:
 aws iam create-role --role-name gh-deploy-iam-role \
     --assume-role-policy-document file:///workspaces/pick-a-number/src/scripts/gh-deploy-iam-role.json
 ```
-
-Create a
-[GitHub environment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
-and add the following environment variables,
-which will be accessible for workflows under the `vars` context:
-
-- `APP_NAME`, optional
-- `AWS_REGION`, required
-- `AWS_ROLE_ARN`, required
-- `BUDGET_EMAIL`, required
-- `ENVIRONMENT`, optional
 
 ### Using the app
 
