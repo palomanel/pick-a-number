@@ -21,8 +21,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v6
         with:
           audience: sts.amazonaws.com.cn
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
           role-session-name: github-actions-deploy
       - name: Additional steps
         run: |
