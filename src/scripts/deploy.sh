@@ -10,13 +10,16 @@ set -e
 # Cleanup on exit
 trap 'rm -rf ../backend/dist 2>/dev/null' EXIT
 
+# Load environment variables or fallback to defaults
+BUDGET_EMAIL="${BUDGET_EMAIL:-john_doe@example.com}"
+APP_NAME="${APP_NAME:-pick-a-number}"
+ENVIRONMENT="${ENVIRONMENT:-dev}"
+REGION="${REGION:-eu-central-1}"
+
+# Source location
 TEMPLATE_FILE="../cloudformation/jamstack-template.yaml"
 FRONTEND_DIR="frontend"
 BACKEND_DIR="backend"
-BUDGET_EMAIL="john_doe@example.com"
-APP_NAME="pick-a-number"
-ENVIRONMENT="dev"
-REGION="eu-central-1"
 
 echo "Activating cost allocation tags in Billing Console..."
 aws ce update-cost-allocation-tags-status \

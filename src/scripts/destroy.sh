@@ -5,9 +5,10 @@
 
 set -e
 
-APP_NAME="pick-a-number"
-ENVIRONMENT="dev"
-
+# Load environment variables or fallback to defaults
+APP_NAME="${APP_NAME:-pick-a-number}"
+ENVIRONMENT="${ENVIRONMENT:-dev}"
+REGION="${REGION:-eu-central-1}"
 
 STACK_NAME="${APP_NAME}-${ENVIRONMENT}"
 echo "WARNING: This will delete all resources in stack '${STACK_NAME}' including data in S3 and DynamoDB!"
