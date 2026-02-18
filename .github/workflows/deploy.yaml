@@ -23,7 +23,13 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
           role-session-name: github-actions-deploy
-      - name: Additional steps
+      - uses: actions/checkout@v6
+      - name: Run deployment script
+        env:
+          APP_NAME: ${{ vars.APP_NAME }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          BUDGET_EMAIL: ${{ vars.BUDGET_EMAIL }}
+          ENVIRONMENT: ${{ vars.ENVIRONMENT }}
         run: |
-          # Your commands that require AWS credentials
-          aws sts get-caller-identity
+          cd src/scripts
+          sh deploy.sh
