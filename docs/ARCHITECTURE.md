@@ -65,6 +65,12 @@ The main objectives when designing this architecture have been:
 
 ### Management Layer
 
+- **Environment Management**
+  - **Environment Separation** is ensured by object nomenclature and tagging,
+    making it possible to host several environments in the same account.
+  - **Budget** can be tracked per environment, using a Cost Filter based on the
+    `aws:cloudformation:stack-name` tag. An example Budget Notification has
+    enabled and the email recipient is configurable.
 - **Logging**:
   - **Amazon S3** and **CloudFront** logs can be only delivered to S3,
     a "logs" bucket was added for this purpose together with a lifecycle policy.
