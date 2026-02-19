@@ -10,13 +10,16 @@ set -e
 # Cleanup on exit
 trap 'rm -rf ../backend/dist 2>/dev/null' EXIT
 
+# Load environment variables or fallback to defaults
+BUDGET_EMAIL="${BUDGET_EMAIL:-john_doe@example.com}"
+APP_NAME="${APP_NAME:-pick-a-number}"
+ENVIRONMENT="${ENVIRONMENT:-dev}"
+AWS_REGION="${REGION:-eu-central-1}"
+
+# Source location
 TEMPLATE_FILE="../cloudformation/jamstack-template.yaml"
 FRONTEND_DIR="frontend"
 BACKEND_DIR="backend"
-BUDGET_EMAIL="john_doe@example.com"
-APP_NAME="pick-a-number"
-ENVIRONMENT="dev"
-REGION="eu-central-1"
 
 echo "Activating cost allocation tags in Billing Console..."
 aws ce update-cost-allocation-tags-status \
@@ -29,14 +32,14 @@ aws cloudformation deploy \
     --template-file "${TEMPLATE_FILE}" \
     --stack-name "${STACK_NAME}" \
     --capabilities CAPABILITY_IAM \
-    --region "${REGION}" \
+    --region "${AWS_REGION}" \
     --parameter-overrides BudgetNotificationEmail="${BUDGET_EMAIL}" Environment="${ENVIRONMENT}" \
     --tags Environment="${ENVIRONMENT}"
 
 echo "Getting S3 bucket name..."
 BUCKET_NAME=$(aws cloudformation describe-stacks \
     --stack-name "${STACK_NAME}" \
-    --region "${REGION}" \
+    --region "${AWS_REGION}" \
     --query 'Stacks[0].Outputs[?OutputKey==`S3BucketName`].OutputValue' \
     --output text)
 
@@ -54,7 +57,7 @@ LAYER_ARN=$(aws lambda publish-layer-version \
     --description "Python dependencies for ${STACK_NAME}" \
     --zip-file fileb://dependencies-layer.zip \
     --compatible-runtimes python3.14 \
-    --region "${REGION}" \
+    --region "${AWS_REGION}" \
     --query "LayerVersionArn" \
     --output text)
 
@@ -73,10 +76,10 @@ while read FUNCTION SOURCE; do
     aws lambda update-function-configuration \
         --function-name "${FUNCTION_NAME}" \
         --layers "${LAYER_ARN}" \
-        --region "${REGION}" \
+        --region "${AWS_REGION}" \
         --output text > /dev/null
 
-    aws lambda wait function-updated --function-name "${FUNCTION_NAME}" --region "${REGION}"
+    aws lambda wait function-updated --function-name "${FUNCTION_NAME}" --region "${AWS_REGION}"
 
     # Now update code
     echo "Updating Lambda function code for ${FUNCTION_NAME}"
@@ -95,15 +98,11 @@ EOF
 echo "Getting CloudFront URL..."
 CLOUDFRONT_URL=$(aws cloudformation describe-stacks \
     --stack-name "${STACK_NAME}" \
-    --region "${REGION}" \
+    --region "${AWS_REGION}" \
     --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontURL`].OutputValue' \
     --output text)
 
 cat << EOF
 Deployment complete!
-Application URL:
-- ${CLOUDFRONT_URL}
-API Endpoints:
-- ${CLOUDFRONT_URL}/api/submit-number
-- ${CLOUDFRONT_URL}/api/stats
+Application URL: ${CLOUDFRONT_URL}
 EOF

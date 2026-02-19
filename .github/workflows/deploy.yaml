@@ -1,0 +1,39 @@
+---
+name: Deploy app using OIDC role
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: main
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: github-actions-deploy
+      - uses: actions/checkout@v6
+      - name: Run deployment script
+        id: deploy
+        env:
+          APP_NAME: ${{ vars.APP_NAME }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          BUDGET_EMAIL: ${{ vars.BUDGET_EMAIL }}
+          ENVIRONMENT: ${{ vars.ENVIRONMENT }}
+        run: |
+          cd src/scripts
+          sh deploy.sh | tee deployment.log
+          URL=$(grep -o -E 'https?://[^"]+' deployment.log)
+          echo "url=$URL" >> $GITHUB_OUTPUT

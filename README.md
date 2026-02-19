@@ -27,14 +27,16 @@ All of the components are contained in this repo including:
   X-ray tracing is also enabled
 - **Infrastructure-as-Code**, a CloudFormation template that deploys the
   AWS infrastructure, including an AWS Budget
-- **CI/CD and tooling**, a `devcontainer` configuration, local `pre-commit`
-  hooks, and CI/CD workflows
+- **CI/CD and tooling**, a `devcontainer` configuration, `pre-commit`
+  hooks, deployment automation using OIDC
 
 If you have an [AWS Free Tier](https://aws.amazon.com/free/) account and don't
 exceed resource thresholds your consumption will be **zero**, so this
 project is a great way to get your feet wet using AWS cloud infrastructure.
 
 ## Usage
+
+### Deploying from the CLI
 
 Everything has been built and tested inside the
 [devcontainer](.devcontainer/devcontainer.json) using
@@ -51,24 +53,72 @@ To deploy the app follow these steps:
 1. Clone or fork the project
 1. Login to your AWS account, `aws login` with web based authentication works
    fine, no need to use tokens
-1. Review `src/scripts/deploy.sh` and change the variable defaults to your
-   liking, it's particularly important you check `APP_NAME` and `ENVIRONMENT`
+1. Review `src/scripts/deploy.sh` and set environment variables to your
+   liking, it's particularly important you set `APP_NAME` and `ENVIRONMENT`
    to avoid name clashes in AWS resources
 1. Run the deployment script:
 
 ```bash
 cd src/scripts
-./deploy.sh
+APP_NAME=my-test ./deploy.sh
 ```
 
-The deployment script will output the application endpoints, all fronted by the
-CloudFront distribution URL. Use that address on your web browser to open the
-web app.
+The deployment script will output the application endpoint, all traffic is
+fronted by the CloudFront distribution URL.
 
-Upon opening the web app users will be able to pick a number between 1 and 10.
+### Continuous deployment using GitHub Actions
+
+The first step is to
+[fork the repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo).
+
+The `deploy` workflow uses OIDC to assume a deployment role, check
+[GitHub changelog: GitHub Actions: Secure cloud deployments with OpenID Connect](https://github.blog/changelog/2021-10-27-github-actions-secure-cloud-deployments-with-openid-connect/)
+for more details. This auth method is both more practical and more secure,
+no need to create IAM accounts or generate and store tokens.
+
+Only a GitHub Actions runner triggered for an environment in your repo
+will be able to acquire the AWS deploy role.
+You'll need to setup the trust relationship. Summarizing the necessary steps:
+
+1. Create an AWS IAM Identity Provider that trusts
+   GitHub's OIDC endpoint to enable federation.
+2. Create the actual role that the GitHub action runner will assume,
+   specifying a trust relationship with a specific repo.
+3. Configure the GitHub runner to use the role.
+
+The first couple of steps can be done with a script shipped with this repo.
+Ensure you're logged into you AWS account before starting,
+The script is interactive and will guide you through the process.
+
+```bash
+cd src/scripts
+./create_oidc_role.sh
+```
+
+Note down OIDC role's ARN, you'll need that in the next step.
+
+Access your repo settings and add configure the `main`
+[GitHub environment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
+, add the following values:
+
+- environment variables, accessible for workflows under the `vars` context.
+  - `APP_NAME`, optional
+  - `AWS_REGION`, required
+  - `BUDGET_EMAIL`, required
+  - `ENVIRONMENT`, optional
+- secrets, accessible for workflows under the `secrets` context.
+  - `AWS_ROLE_ARN`, required
+
+When triggered the `deploy` job will execute `deploy.sh`.
+After successful completion the app will be deployed and the
+application endpoint will added to the GitHub environment.
+
+### Using the app
+
+The web app prompts users to pick a number between 1 and 10.
 By clicking the "Submit" button a JSON payload will be posted to the API backend
 and stored in DynamoDB. The web browser will require authorization to access the
-user's location. This is optional.
+user's location, this is optional.
 
 You can connect to the REST API using `curl`:
 
