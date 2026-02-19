@@ -29,6 +29,8 @@ The main objectives when designing this architecture have been:
   [princple of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege)
   .
 - **Auditable**: Log forwarding and retention for all system components.
+- **CI/CD**: linting and quality checks on the developer's machine and on
+  the repo using `pre-commit`, automated deployment using OIDC trust relationship
 - **Cost efficient**: Pay-per-use pricing model for all services, with
   budget notifications for ongoing cost control.
 
@@ -71,6 +73,9 @@ The main objectives when designing this architecture have been:
   - **Budget** can be tracked per environment, using a Cost Filter based on the
     `aws:cloudformation:stack-name` tag. An example Budget Notification has
     enabled and the email recipient is configurable.
+- **Release Management**
+  - **Deployment** is automated using an OIDC trust relationship between GitHub
+    and AWS whenever there's a commit to the `main` branch.
 - **Logging**:
   - **Amazon S3** and **CloudFront** logs can be only delivered to S3,
     a "logs" bucket was added for this purpose together with a lifecycle policy.

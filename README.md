@@ -64,8 +64,7 @@ APP_NAME=my-test ./deploy.sh
 ```
 
 The deployment script will output the application endpoint, all traffic is
-fronted by the CloudFront distribution URL. Use that address on your web
-browser to open the web app.
+fronted by the CloudFront distribution URL.
 
 ### Continuous deployment using GitHub Actions
 

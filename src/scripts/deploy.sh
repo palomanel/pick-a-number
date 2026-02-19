@@ -104,9 +104,5 @@ CLOUDFRONT_URL=$(aws cloudformation describe-stacks \
 
 cat << EOF
 Deployment complete!
-Application URL:
-- ${CLOUDFRONT_URL}
-API Endpoints:
-- ${CLOUDFRONT_URL}/api/submit-number
-- ${CLOUDFRONT_URL}/api/stats
+Application URL: ${CLOUDFRONT_URL}
 EOF
