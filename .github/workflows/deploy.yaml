@@ -6,7 +6,6 @@ on:
   push:
     branches:
       - main
-      - 19-todo-cotinuous-deployment-using-github-actions
   workflow_dispatch:
 
 permissions:
