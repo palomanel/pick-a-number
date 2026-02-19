@@ -73,7 +73,12 @@ The first step is to
 
 The `deploy` workflow uses OIDC to assume a deployment role, check
 [GitHub changelog: GitHub Actions: Secure cloud deployments with OpenID Connect](https://github.blog/changelog/2021-10-27-github-actions-secure-cloud-deployments-with-openid-connect/)
-for more details, but summarizing the necessary steps:
+for more details. This auth method is both more practical and more secure,
+no need to create IAM accounts or generate and store tokens.
+
+Only a GitHub Actions runner triggered for an environment in your repo
+will be able to acquire the AWS deploy role.
+You'll need to setup the trust relationship. Summarizing the necessary steps:
 
 1. Create an AWS IAM Identity Provider that trusts
    GitHub's OIDC endpoint to enable federation.
@@ -94,14 +99,15 @@ Note down OIDC role's ARN, you'll need that in the next step.
 
 Access your repo settings and add configure the `main`
 [GitHub environment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
-Add the following environment variables,
-which will be accessible for workflows under the `vars` context.
+and add the following values:
 
-- `APP_NAME`, optional
-- `AWS_REGION`, required
-- `AWS_ROLE_ARN`, required
-- `BUDGET_EMAIL`, required
-- `ENVIRONMENT`, optional
+- environment variables, accessible for workflows under the `vars` context.
+  - `APP_NAME`, optional
+  - `AWS_REGION`, required
+  - `BUDGET_EMAIL`, required
+  - `ENVIRONMENT`, optional
+- secrets, accessible for workflows under the `secrets` context.
+  - `AWS_ROLE_ARN`, required
 
 After this the GitHub runner should have everything it needs
 to run `deploy.sh`. After successful completion the app will be deployed and the
