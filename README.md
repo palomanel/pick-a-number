@@ -99,7 +99,7 @@ Note down OIDC role's ARN, you'll need that in the next step.
 
 Access your repo settings and add configure the `main`
 [GitHub environment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
-and add the following values:
+, add the following values:
 
 - environment variables, accessible for workflows under the `vars` context.
   - `APP_NAME`, optional
