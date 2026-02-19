@@ -16,7 +16,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: ${{ vars.ENVIRONMENT }}
+      name: main
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - name: Configure AWS Credentials
