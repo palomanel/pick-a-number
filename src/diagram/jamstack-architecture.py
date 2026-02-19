@@ -10,6 +10,8 @@ from diagrams.aws.compute import Lambda
 from diagrams.aws.database import Dynamodb
 from diagrams.aws.management import CloudwatchLogs
 from diagrams.aws.devtools import XRay
+from diagrams.aws.management import Cloudformation
+from diagrams.onprem.vcs import Github
 
 graph_attr = {
     "layout": "dot",
@@ -22,8 +24,10 @@ with Diagram(
     filename="jamstack-architecture",
     show=False,
     graph_attr=graph_attr,
+    direction="LR",
 ):
     user = User("User")
+    github = Github("GitHub\nRepository")
 
     with Cluster("AWS Cloud", graph_attr={"pad": "2"}):
 
@@ -43,6 +47,7 @@ with Diagram(
             logs = S3("Logs\nS3 Bucket")
             cloudwatch = CloudwatchLogs("CloudWatch\nLogs")
             xray = XRay("X-Ray\nTracing")
+            cloudformation = Cloudformation("CloudFormation\nStack")
 
     user >> cloudfront
     cloudfront >> Edge(label="/", minlen="2") >> s3
@@ -70,3 +75,4 @@ with Diagram(
     api_gateway >> Edge(style="dashed") >> xray
     submit_number_lambda >> Edge(style="dashed") >> xray
     stats_lambda >> Edge(style="dashed") >> xray
+    github >> Edge(style="dashed") >> cloudformation
