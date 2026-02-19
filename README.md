@@ -103,6 +103,10 @@ which will be accessible for workflows under the `vars` context.
 - `BUDGET_EMAIL`, required
 - `ENVIRONMENT`, optional
 
+After this the GitHub runner should have everything it needs
+to run `deploy.sh`. After successful completion the app will be deployed and the
+application endpoint is available from the GitHub environment.
+
 ### Using the app
 
 Upon opening the web app users will be able to pick a number between 1 and 10.
