@@ -109,13 +109,13 @@ Access your repo settings and add configure the `main`
 - secrets, accessible for workflows under the `secrets` context.
   - `AWS_ROLE_ARN`, required
 
-After this the GitHub runner should have everything it needs
-to run `deploy.sh`. After successful completion the app will be deployed and the
-application endpoint is available from the GitHub environment.
+The `deploy` job will execute `deploy.sh`.
+After successful completion the app will be deployed and the
+application endpoint will added to the GitHub environment.
 
 ### Using the app
 
-Upon opening the web app users will be able to pick a number between 1 and 10.
+The web app prompts users to pick a number between 1 and 10.
 By clicking the "Submit" button a JSON payload will be posted to the API backend
 and stored in DynamoDB. The web browser will require authorization to access the
 user's location. This is optional.
