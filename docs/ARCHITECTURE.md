@@ -29,7 +29,7 @@ The main objectives when designing this architecture have been:
   [princple of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege)
   .
 - **Auditable**: Log forwarding and retention for all system components.
-- **CI/CD**: linting and quality checks on the developer's machine and on
+- **Automated**: linting and quality checks on the developer's machine and on
   the repo using `pre-commit`, automated deployment using OIDC trust relationship
 - **Cost efficient**: Pay-per-use pricing model for all services, with
   budget notifications for ongoing cost control.
