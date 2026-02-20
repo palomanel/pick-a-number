@@ -6,6 +6,10 @@ import logging
 import datetime
 from datetime import date, datetime, timezone, time
 from decimal import Decimal
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
+patch_all()
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -36,10 +40,7 @@ def handler(event, context):
                 "longitude": Decimal(repr(payload["location"]["longitude"])),
             }
             if payload["location"] is not None
-            else {
-                "latitude": None,
-                "longitude": None,
-            }
+            else None
         )
 
         table.put_item(
@@ -58,29 +59,20 @@ def handler(event, context):
 
         return {
             "statusCode": 200,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
+            "headers": {"Content-Type": "application/json"},
             "body": json.dumps({"event_date": event_date, "status": "success"}),
         }
     except json.JSONDecodeError as e:
         logger.error(f"JSON decode error: {str(e)}, event body: {event.get('body')}")
         return {
             "statusCode": 400,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
+            "headers": {"Content-Type": "application/json"},
             "body": json.dumps({"error": f"Invalid JSON: {str(e)}"}),
         }
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}", exc_info=True)
         return {
             "statusCode": 500,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
+            "headers": {"Content-Type": "application/json"},
             "body": json.dumps({"error": str(e)}),
         }

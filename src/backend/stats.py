@@ -5,6 +5,10 @@ import logging
 from boto3.dynamodb.conditions import Key
 from datetime import datetime, timedelta
 from collections import Counter
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
+patch_all()
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -43,10 +47,7 @@ def handler(event, context):
 
         return {
             "statusCode": 200,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
+            "headers": {"Content-Type": "application/json"},
             "body": json.dumps(
                 {
                     "from": from_date.isoformat(),
@@ -61,9 +62,6 @@ def handler(event, context):
         logger.error(f"Unexpected error: {str(e)}", exc_info=True)
         return {
             "statusCode": 500,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
+            "headers": {"Content-Type": "application/json"},
             "body": json.dumps({"error": str(e)}),
         }
