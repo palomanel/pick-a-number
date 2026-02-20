@@ -7,42 +7,6 @@ const submitBtn = document.getElementById("submit-btn");
 const messageDiv = document.getElementById("message");
 const selectedText = document.getElementById("selected-text");
 const selectedNumberSpan = document.getElementById("selected-number");
-const statsMessage = document.getElementById("stats-message");
-
-// Initialize submit button as disabled
-submitBtn.disabled = true;
-
-/**
- * Fetch and display yesterday's daily stats
- */
-async function loadDailyStats() {
-  try {
-    const response = await fetch(STATS_ENDPOINT);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    displayDailyStats(data);
-  } catch (error) {
-    console.error("Error fetching daily stats:", error);
-    statsMessage.textContent = "Could not load yesterday's statistics";
-    statsMessage.className = "stats-error";
-  }
-}
-
-/**
- * Display daily stats in the UI
- * @param {Object} stats - Stats object from API
- */
-function displayDailyStats(stats) {
-  if (stats.most_selected_number === null) {
-    statsMessage.textContent = "No submissions yet for yesterday";
-    statsMessage.className = "stats-empty";
-  } else {
-    statsMessage.innerHTML = `Yesterday's most chosen number was <strong>${stats.most_selected_number}</strong> (selected ${stats.count} time${stats.count !== 1 ? "s" : ""} out of ${stats.total_submissions} submission${stats.total_submissions !== 1 ? "s" : ""})`;
-    statsMessage.className = "stats-loaded";
-  }
-}
 
 // Initialize submit button as disabled
 submitBtn.disabled = true;
@@ -54,9 +18,6 @@ numberButtons.forEach((button) => {
 
 submitBtn.addEventListener("click", handleSubmit);
 
-// Load daily stats on page load
-loadDailyStats();
-
 // Debug: log initial state
 console.log("Number buttons found:", numberButtons.length);
 console.log(
@@ -65,7 +26,6 @@ console.log(
   "Disabled state:",
   submitBtn.disabled,
 );
-console.log("Daily stats element found:", statsMessage !== null);
 
 /**
  * Handle number selection
