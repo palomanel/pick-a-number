@@ -1,0 +1,40 @@
+---
+name: Generate Diagrams
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    branches:
+      - main
+    path:
+      - "docs/diagrams/**"
+
+permissions:
+  contents: write
+
+jobs:
+  diagrams:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - name: Install dependencies
+        run: |
+          sudo apt install graphviz
+          pip install -r docs/diagrams/requirements.txt
+      - name: Generate diagrams
+        run: |
+          cd docs/diagrams
+          python jamstack-architecture.py
+      - name: Add and commit generated diagrams
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "notifications@github.com"
+          git add docs/assets/*.png
+          git commit -m "docs: update diagrams" || echo "No changes to commit"
+          git push

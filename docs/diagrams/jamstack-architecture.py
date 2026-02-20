@@ -69,12 +69,12 @@ with Diagram(
         >> dynamodb
     )
 
-    cloudfront >> Edge(style="dashed") >> logs
-    s3 >> Edge(style="dashed") >> logs
     api_gateway >> Edge(style="dashed") >> cloudwatch
-    submit_number_lambda >> Edge(style="dashed") >> cloudwatch
-    stats_lambda >> Edge(style="dashed") >> cloudwatch
     api_gateway >> Edge(style="dashed") >> xray
-    submit_number_lambda >> Edge(style="dashed") >> xray
-    stats_lambda >> Edge(style="dashed") >> xray
+    cloudfront >> Edge(style="dashed") >> logs
     github >> Edge(style="dashed") >> cloudformation
+    s3 >> Edge(style="dashed") >> logs
+    stats_lambda >> Edge(style="dashed") >> cloudwatch
+    stats_lambda >> Edge(style="dashed") >> xray
+    submit_number_lambda >> Edge(style="dashed") >> cloudwatch
+    submit_number_lambda >> Edge(style="dashed") >> xray
