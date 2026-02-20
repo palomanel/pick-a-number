@@ -28,9 +28,11 @@ The main objectives when designing this architecture have been:
   validation, rate limiting, and IAM permissions following the
   [princple of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege)
   .
-- **Auditable**: Log forwarding and retention for all system components.
+- **Auditable**: Log forwarding and retention for all system components, X-ray
+  tracing enabling tracking user initiated request across services.
 - **Automated**: linting and quality checks on the developer's machine and on
-  the repo using `pre-commit`, automated deployment using OIDC trust relationship
+  the repo using `pre-commit`, unit tests leveraging moto to mock AWS objects,
+  automated IaC deployment using OIDC trust relationship.
 - **Cost efficient**: Pay-per-use pricing model for all services, with
   budget notifications for ongoing cost control.
 
@@ -64,46 +66,42 @@ The main objectives when designing this architecture have been:
   time-series workloads, but its free tier is only available for 30 days.
   Using DynamoDB has the downside of the caller code needing to aggregate the
   data when doing a range query.
+- **~~DynamoDB Point-in-Time Recovery (PITR)~~** is not included in the AWS
+  Free Tier and incurs additional charges so it's not part of the
+  architecture. Possible alternatives would be manually creating backups
+  or automating on a schedule using EventBridge + Lambda. No other component
+  needs backups as everything else can be restored from source.
 
 ### Management Layer
 
-- **Environment Management**
-  - **Environment Separation** is ensured by object nomenclature and tagging,
-    making it possible to host several environments in the same account.
-  - **Budget** can be tracked per environment, using a Cost Filter based on the
-    `aws:cloudformation:stack-name` tag. An example Budget Notification has
-    enabled and the email recipient is configurable.
-- **Release Management**
-  - **Deployment** is automated using an OIDC trust relationship between GitHub
-    and AWS whenever there's a commit to the `main` branch.
-- **Logging**:
-  - **Amazon S3** and **CloudFront** logs can be only delivered to S3,
-    a "logs" bucket was added for this purpose together with a lifecycle policy.
-    Typically in a production system these events will be forwarded to a
-    [SIEM](https://en.wikipedia.org/wiki/Security_information_and_event_management)
-    system, but you might want to review the `DeletionPolicy` and set it to
-    `RETAIN`. The log retention period is defined by a CloudFormation parameter.
-  - **Application** level logs that need real-time monitoring
-    (API Gateway and Lambda) are delivered to Cloudwatch.
-    The log retention period is defined by a CloudFormation parameter.
-- **Tracing**;
-  - **X-ray tracing** traces user requests from end-to-end. It visualizes
-    request path via service maps, identifies performance bottlenecks,
-    and troubleshoots errors.
-    [X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html)
-    supports automatic instrumentation for
-    Java, Node.js, Python, and .NET, with seamless integration for AWS
-    Lambda, ECS, and API Gateway. X-Ray can be enabled within free tier
-    limits.
-    X-Ray trace retention is fixed at 30 days, and AWS doesn't allow to
-    configure it. It would be possible to export this info, but out of
-    scope for this project.
-- **Backups**:
-  - **~~DynamoDB Point-in-Time Recovery (PITR)~~** is not included in the AWS
-    Free Tier and incurs additional charges so it's not part of the
-    architecture. Possible alternatives would be manually creating backups
-    or automating on a schedule using EventBridge + Lambda. No other component
-    needs backups as everything else can be restored from source.
+- **Amazon CloudFormation**: native AWS Infrastructure as Code (IaC) that is
+  used to provision and manage the necessary resources. This project's
+  template supports multiple environments in the same AWS account. Deployment
+  can be done locally or through GitHub using an OIDC trust relationship.
+- **Amazon S3**: the logs for the Frontend Layer are delivered to
+  a "logs" S3 bucket. Retention is handled using a lifecycle policy
+  and the period can be configured thorough a parameter.
+  Typically in a production system these events will be forwarded to a
+  [SIEM](https://en.wikipedia.org/wiki/Security_information_and_event_management)
+  system.
+- **Amazon CloudWatch**: applicationlevel logs that need real-time monitoring
+  (API Gateway and Lambda) are delivered to Cloudwatch.
+  The log retention period is defined by a CloudFormation parameter.
+- **Amazon X-Ray**: traces user requests from end-to-end. It visualizes
+  request path via service maps, identifies performance bottlenecks,
+  and troubleshoots errors.
+  [X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html)
+  supports automatic instrumentation for
+  Java, Node.js, Python, and .NET, with seamless integration for AWS
+  Lambda, ECS, and API Gateway. X-Ray can be enabled within free tier
+  limits.
+  X-Ray trace retention is fixed at 30 days, and AWS doesn't allow to
+  configure it. It would be possible to export this info, but out of
+  scope for this project.
+- **AWS Budgets**: a cost management tool to plan and monitor cloud costs.
+  The example budget tracks resource consumption per environment, and will
+  trigger an email notification if the budget threshold is exceeded,
+  the email recipient is configurable.
 
 ## Request Flow
 

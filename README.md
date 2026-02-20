@@ -28,7 +28,7 @@ All of the components are contained in this repo including:
 - **Infrastructure-as-Code**, a CloudFormation template that deploys the
   AWS infrastructure, including an AWS Budget
 - **CI/CD and tooling**, a `devcontainer` configuration, `pre-commit`
-  hooks, deployment automation using OIDC
+  hooks, unit tests, deployment automation using OIDC
 
 If you have an [AWS Free Tier](https://aws.amazon.com/free/) account and don't
 exceed resource thresholds your consumption will be **zero**, so this
@@ -36,17 +36,39 @@ project is a great way to get your feet wet using AWS cloud infrastructure.
 
 ## Usage
 
-### Deploying from the CLI
+### Pre-requisites
 
 Everything has been built and tested inside the
 [devcontainer](.devcontainer/devcontainer.json) using
-[VS Code](https://code.visualstudio.com/),
-if you plan to deploy from you local system there's a couple pre-requisites to
-consider:
+[VS Code](https://code.visualstudio.com/).
 
-- scripts need a Linux or MacOS environment
-- [aws-cli](https://aws.amazon.com/cli/) should be available
-- you should have administrator access to an AWS account
+Mileage may vary when using an ad-hoc environment, keep in mind
+there's a few pre-requisites to consider:
+
+- python 3.14
+- shell scripts need a Linux or MacOS environment
+- [aws-cli](https://aws.amazon.com/cli/)
+- administrator access to an AWS account
+
+### Testing locally
+
+It's possible to test backend python services locally by using
+[moto](https://github.com/getmoto/moto)
+to mock out AWS infrastructure.
+
+Create a virtual environment, install dependencies and run
+unit tests:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r src/backend/requirements.txt -r tests/requirements-test.txt
+pytest tests/ -v
+```
+
+There's also a GitHub workflow that runs tests for any pull request to `main`.
+
+### Deploying from the CLI
 
 To deploy the app follow these steps:
 
