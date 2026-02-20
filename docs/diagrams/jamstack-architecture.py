@@ -12,6 +12,7 @@ from diagrams.aws.management import CloudwatchLogs
 from diagrams.aws.devtools import XRay
 from diagrams.aws.management import Cloudformation
 from diagrams.onprem.vcs import Github
+from diagrams.aws.cost import Budgets
 
 graph_attr = {
     "layout": "dot",
@@ -21,7 +22,7 @@ graph_attr = {
 
 with Diagram(
     "pick-a-number\nSample JAMstack architecture",
-    filename="jamstack-architecture",
+    filename="../assets/jamstack-architecture",
     show=False,
     graph_attr=graph_attr,
     direction="LR",
@@ -44,10 +45,11 @@ with Diagram(
             dynamodb = Dynamodb("DynamoDB\nTable")
 
         with Cluster("Management\nLayer"):
-            logs = S3("Logs\nS3 Bucket")
-            cloudwatch = CloudwatchLogs("CloudWatch\nLogs")
-            xray = XRay("X-Ray\nTracing")
+            budget = Budgets("AWS Budget")
             cloudformation = Cloudformation("CloudFormation\nStack")
+            cloudwatch = CloudwatchLogs("CloudWatch\nLogs")
+            logs = S3("Logs\nS3 Bucket")
+            xray = XRay("X-Ray\nTracing")
 
     user >> cloudfront
     cloudfront >> Edge(label="/", minlen="2") >> s3
