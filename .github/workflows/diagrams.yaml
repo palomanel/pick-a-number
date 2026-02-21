@@ -33,8 +33,8 @@ jobs:
           python jamstack-architecture.py
       - name: Add and commit generated diagrams
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "notifications@github.com"
+          git config user.name github-actions
+          git config user.email github-actions@github.com
           git add docs/assets/*.png
           git commit -m "docs: update diagrams"
           git push
