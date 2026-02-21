@@ -36,5 +36,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "notifications@github.com"
           git add docs/assets/*.png
-          git commit -m "docs: update diagrams" || echo "No changes to commit"
+          git commit -m "docs: update diagrams"
           git push
