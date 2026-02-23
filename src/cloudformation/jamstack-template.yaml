@@ -13,7 +13,7 @@ Parameters:
       alphanumeric characters and hyphens
   NotificationEmail:
     Type: String
-    Description: Email address for AWS budget notifications
+    Description: Email address for notifications
     AllowedPattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     ConstraintDescription: Must be a valid email address
   LogRetentionDays:
