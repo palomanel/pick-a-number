@@ -7,8 +7,8 @@ on:
     branches:
       - main
     path:
-      - src/backend/**
-      - tests/**
+      - "src/backend/**"
+      - "tests/**"
 
 permissions:
   contents: read
