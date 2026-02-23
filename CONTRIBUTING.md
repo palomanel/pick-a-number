@@ -18,14 +18,17 @@ Follow these steps:
 ├── .github/                # GitHub specific settings
 │   └── workflows/          # CI/CD jobs
 ├── .devcontainer/          # Devcontainer configuration
-├── docs/                   # Documentation
 ├── cloudformation/         # Infrastructure as Code
+├── docs/                   # Documentation
+│   └── assets/             # Images
+│   └── diagrams/           # Sources for diagrams
 ├── src/                    # Application source code
 │   └── backend/            # Application Backend
 │   └── cloudformation/     # Infrastructure as Code
 │   └── frontend/           # Application Frontend
 │   └── scripts/            # Utility scripts used for CI/CD and locally
 ├── tests/                  # Test suite
+│   └── backend/            # Tests for the Application Backend
 ├── README.md               # Repository information
 ├── LICENSE                 # MIT License
 └── CONTRIBUTING.md         # Contribution instructions
@@ -50,12 +53,18 @@ Follow these steps:
   - Use vanilla Javascript only
   - No `let` declarations, all data structures should be declared as `const`
 - Python
-  - Follow PEP 8 for Python code
+  - even inside the devcontainer it's recommended that you create
+    python virtual environments
+  - Follow the [PEP 8](https://peps.python.org/pep-0008/) style guide
 - Testing
   - Write unit tests for new functions
   - Update existing tests if behavior changes
   - Ensure test coverage remains adequate
   - Run tests locally before submitting
+- Documentation
+  - Ensure relevant changes are documented (including diagrams)
+  - Diagrams are generated using the Python
+    [diagrams](https://diagrams.mingrammer.com/) package
 
 ## Submmiting a Pull Request
 
