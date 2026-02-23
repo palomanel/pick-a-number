@@ -24,7 +24,7 @@ All of the components are contained in this repo including:
 - **Frontend**, a one page web app using HTML and vanilla JavaScript
 - **Backend**, a data ingestion REST API and persistence layer
 - **Management**, supports several environments, logging for all components,
-  X-ray tracing is also enabled
+  X-ray tracing, Service Level Objectives alarms and dashboard
 - **Infrastructure-as-Code**, a CloudFormation template that deploys the
   AWS infrastructure, including an AWS Budget
 - **CI/CD and tooling**, a `devcontainer` configuration, `pre-commit`
@@ -126,7 +126,7 @@ Access your repo settings and add configure the `main`
 - environment variables, accessible for workflows under the `vars` context.
   - `APP_NAME`, optional
   - `AWS_REGION`, required
-  - `BUDGET_EMAIL`, required
+  - `NOTIFY_EMAIL`, required
   - `ENVIRONMENT`, optional
 - secrets, accessible for workflows under the `secrets` context.
   - `AWS_ROLE_ARN`, required
