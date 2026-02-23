@@ -11,7 +11,7 @@ set -e
 trap 'rm -rf ../backend/dist 2>/dev/null' EXIT
 
 # Load environment variables or fallback to defaults
-BUDGET_EMAIL="${BUDGET_EMAIL:-john_doe@example.com}"
+NOTIFY_EMAIL="${NOTIFY_EMAIL:-john_doe@example.com}"
 APP_NAME="${APP_NAME:-pick-a-number}"
 ENVIRONMENT="${ENVIRONMENT:-dev}"
 AWS_REGION="${REGION:-eu-central-1}"
@@ -33,7 +33,7 @@ aws cloudformation deploy \
     --stack-name "${STACK_NAME}" \
     --capabilities CAPABILITY_IAM \
     --region "${AWS_REGION}" \
-    --parameter-overrides BudgetNotificationEmail="${BUDGET_EMAIL}" Environment="${ENVIRONMENT}" \
+    --parameter-overrides NotificationEmail="${NOTIFY_EMAIL}" Environment="${ENVIRONMENT}" \
     --tags Environment="${ENVIRONMENT}"
 
 echo "Getting S3 bucket name..."

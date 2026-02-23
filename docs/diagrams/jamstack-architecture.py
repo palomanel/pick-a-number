@@ -8,16 +8,17 @@ from diagrams.aws.storage import S3
 from diagrams.aws.network import APIGateway
 from diagrams.aws.compute import Lambda
 from diagrams.aws.database import Dynamodb
-from diagrams.aws.management import CloudwatchLogs
+from diagrams.aws.management import CloudwatchLogs, CloudwatchAlarm
 from diagrams.aws.devtools import XRay
 from diagrams.aws.management import Cloudformation
 from diagrams.onprem.vcs import Github
 from diagrams.aws.cost import Budgets
+from diagrams.aws.integration import SNS
 
 graph_attr = {
     "layout": "dot",
     "compound": "true",
-    "pad": "0.5",
+    "pad": "1",
 }
 
 with Diagram(
@@ -28,6 +29,7 @@ with Diagram(
     direction="LR",
 ):
     user = User("User")
+    ops_team = User("Operations\nTeam")
     github = Github("GitHub\nRepository")
 
     with Cluster("AWS Cloud", graph_attr={"pad": "2"}):
@@ -45,10 +47,12 @@ with Diagram(
             dynamodb = Dynamodb("DynamoDB\nTable")
 
         with Cluster("Management\nLayer"):
+            alarms = CloudwatchAlarm("CloudWatch\nAlarms")
             budget = Budgets("AWS Budget")
             cloudformation = Cloudformation("CloudFormation\nStack")
             cloudwatch = CloudwatchLogs("CloudWatch\nLogs")
             logs = S3("Logs\nS3 Bucket")
+            sns = SNS("SNS Topic\n(SLO Alerts)")
             xray = XRay("X-Ray\nTracing")
 
     user >> cloudfront
@@ -78,3 +82,6 @@ with Diagram(
     stats_lambda >> Edge(style="dashed") >> xray
     submit_number_lambda >> Edge(style="dashed") >> cloudwatch
     submit_number_lambda >> Edge(style="dashed") >> xray
+    alarms >> Edge(style="dashed") >> sns
+    sns >> Edge(style="dashed", label="email") >> ops_team
+    budget >> Edge(style="dashed", label="email") >> ops_team
