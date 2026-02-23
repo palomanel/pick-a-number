@@ -4,9 +4,6 @@
   "features": {
     "ghcr.io/devcontainers/features/aws-cli:1": {},
     "ghcr.io/customink/codespaces-features/sam-cli": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:2.14.0": {
-      "moby": false
-    },
     "ghcr.io/prulloac/devcontainer-features/pre-commit:1.0.3": {}
   },
   "customizations": {
@@ -29,21 +26,10 @@
             "env": {
               "FASTMCP_LOG_LEVEL": "ERROR",
               "aws-foundation": "true",
-              "solutions-architect": "true"
-            }
-          },
-          "awslabs.aws-diagram-mcp-server": {
-            "command": "uvx",
-            "args": ["awslabs.aws-diagram-mcp-server"],
-            "env": {
-              "FASTMCP_LOG_LEVEL": "ERROR"
-            }
-          },
-          "awslabs.code-doc-gen-mcp-server": {
-            "command": "uvx",
-            "args": ["awslabs.code-doc-gen-mcp-server"],
-            "env": {
-              "FASTMCP_LOG_LEVEL": "ERROR"
+              "solutions-architect": "true",
+              "finops": "true",
+              "security": "true",
+              "dev-tools": "true"
             }
           }
         }
