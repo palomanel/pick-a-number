@@ -62,7 +62,8 @@ cat > gh-deploy-iam-permissions-policy.json <<EOL
         "lambda:*",
         "iam:*",
         "cloudwatch:*",
-        "cloudformation:*"
+        "cloudformation:*",
+        "sns:*"
       ],
       "Resource": "*"
     }

@@ -8,12 +8,13 @@ are accessible from the same domain using different URI patterns.
 
 The main objectives when designing this architecture have been:
 
-1. provide a full working app example with a frontend, data storage, and
-   data retrieval and analysis
-2. leverage the AWS free tier to create and run the app without incurring any
+1. Provide a full working app example with a frontend, data storage, and
+   data retrieval and analysis.
+2. Leverage the AWS free tier to create and run the app without incurring any
    costs
-3. apply best practices whenever possible, objective 2 entails avoiding some
-   services and patterns, this is discussed below
+3. Apply best practices whenever possible, including operations and management
+   support. Objective 2 entails avoiding some services and patterns, this is
+   discussed below.
 
 ![JAMstack Architecture](assets/jamstack-architecture.png)
 
@@ -84,9 +85,23 @@ The main objectives when designing this architecture have been:
   Typically in a production system these events will be forwarded to a
   [SIEM](https://en.wikipedia.org/wiki/Security_information_and_event_management)
   system.
-- **Amazon CloudWatch**: applicationlevel logs that need real-time monitoring
+- **Amazon CloudWatch Logs**: application level logs that need real-time monitoring
   (API Gateway and Lambda) are delivered to Cloudwatch.
   The log retention period is defined by a CloudFormation parameter.
+- **Amazon CloudWatch Alarms**: monitors specific metrics triggering automated
+  actions. For this project the events will be sent to an **Amazon Simple
+  Notification Service** topic, and alarms will be deliveredy by email.
+  The following alarms have been implemented over native AWS metrics:
+  1. API Gateway 5xx Errors - Triggers if 5xx errors exceed 1 per 5-minute
+     period (availability SLO)
+  2. API Gateway Latency - Triggers if p95 latency exceeds 1000ms (latency SLO)
+  3. SubmitNumber Lambda Errors - Triggers if error rate exceeds 1% (reliability
+     SLO)
+  4. Stats Lambda Errors - Triggers if error rate exceeds 1% (reliability SLO)
+  5. DynamoDB Throttles - Triggers if more than 5 throttled requests occur (
+     performance SLO)
+- **Amazon CloudWatch Dashboard**: a single view for the metrics described in the
+  alarms configuration.
 - **Amazon X-Ray**: traces user requests from end-to-end. It visualizes
   request path via service maps, identifies performance bottlenecks,
   and troubleshoots errors.
@@ -100,8 +115,7 @@ The main objectives when designing this architecture have been:
   scope for this project.
 - **AWS Budgets**: a cost management tool to plan and monitor cloud costs.
   The example budget tracks resource consumption per environment, and will
-  trigger an email notification if the budget threshold is exceeded,
-  the email recipient is configurable.
+  trigger an email notification if the budget threshold is exceeded.
 
 ## Request Flow
 

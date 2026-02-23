@@ -11,9 +11,9 @@ Parameters:
     AllowedPattern: "^[a-zA-Z][a-zA-Z0-9]*$"
     ConstraintDescription: Must start with a letter and contain only\
       alphanumeric characters and hyphens
-  BudgetNotificationEmail:
+  NotificationEmail:
     Type: String
-    Description: Email address for AWS budget notifications
+    Description: Email address for notifications
     AllowedPattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     ConstraintDescription: Must be a valid email address
   LogRetentionDays:
@@ -589,7 +589,328 @@ Resources:
             ThresholdType: PERCENTAGE
           Subscribers:
             - SubscriptionType: EMAIL
-              Address: !Ref BudgetNotificationEmail
+              Address: !Ref NotificationEmail
+
+  # SNS Topic for SLO Alarms
+  SLOAlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${AWS::StackName}-slo-alarms"
+      Subscription:
+        - Endpoint: !Ref NotificationEmail
+          Protocol: email
+
+  # SLO Alarm: API Gateway 5xx Error Rate
+  ApiGateway5xxAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-api-5xx-errors"
+      AlarmDescription: "SLO: API 5xx error rate exceeds 1%"
+      MetricName: 5XXError
+      Namespace: AWS/ApiGateway
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: ApiName
+          Value: !Sub "${AWS::StackName}-api"
+        - Name: Stage
+          Value: !Ref Environment
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref SLOAlarmTopic
+
+  # SLO Alarm: API Gateway Latency
+  ApiGatewayLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-api-latency"
+      AlarmDescription: "SLO: API p95 latency exceeds 1000ms"
+      MetricName: Latency
+      Namespace: AWS/ApiGateway
+      ExtendedStatistic: p95
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 1000
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: ApiName
+          Value: !Sub "${AWS::StackName}-api"
+        - Name: Stage
+          Value: !Ref Environment
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref SLOAlarmTopic
+
+  # SLO Alarm: Lambda Errors (SubmitNumber)
+  SubmitNumberErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-submit-number-errors"
+      AlarmDescription: "SLO: SubmitNumber Lambda error rate exceeds 1%"
+      Metrics:
+        - Id: error_rate
+          Expression: "(errors / invocations) * 100"
+          Label: Error Rate (%)
+        - Id: errors
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Errors
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Ref SubmitNumberFunction
+            Period: 300
+            Stat: Sum
+          ReturnData: false
+        - Id: invocations
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Invocations
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Ref SubmitNumberFunction
+            Period: 300
+            Stat: Sum
+          ReturnData: false
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref SLOAlarmTopic
+
+  # SLO Alarm: Lambda Errors (Stats)
+  StatsErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-stats-errors"
+      AlarmDescription: "SLO: Stats Lambda error rate exceeds 1%"
+      Metrics:
+        - Id: error_rate
+          Expression: "(errors / invocations) * 100"
+          Label: Error Rate (%)
+        - Id: errors
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Errors
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Ref StatsFunction
+            Period: 300
+            Stat: Sum
+          ReturnData: false
+        - Id: invocations
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Invocations
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Ref StatsFunction
+            Period: 300
+            Stat: Sum
+          ReturnData: false
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref SLOAlarmTopic
+
+  # SLO Alarm: DynamoDB Throttled Requests
+  DynamoDBThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-dynamodb-throttles"
+      AlarmDescription: "SLO: DynamoDB throttled requests detected"
+      MetricName: UserErrors
+      Namespace: AWS/DynamoDB
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: TableName
+          Value: !Ref DataTable
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref SLOAlarmTopic
+
+  # SLO Dashboard
+  SLODashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub "${AWS::StackName}-slo-dashboard"
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  ["AWS/ApiGateway",
+                   "5XXError",
+                   {"stat": "Sum", "label": "5xx Errors"}],
+                  [".", "4XXError",
+                  {"stat": "Sum", "label": "4xx Errors"}],
+                  [".", "Count", {"stat": "Sum", "label": "Total Requests"}]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "API Gateway - Error Rate",
+                "period": 300,
+                "yAxis": {"left": {"min": 0}},
+                "annotations": {
+                  "horizontal": [{
+                    "label": "SLO Threshold (1 error)",
+                    "value": 1
+                  }]
+                },
+                "dimensions": {
+                  "ApiName": "${AWS::StackName}-api",
+                  "Stage": "${Environment}"
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  ["AWS/ApiGateway", "Latency",
+                  {"stat": "Average", "label": "Avg Latency"}],
+                  ["...", {"stat": "p95", "label": "p95 Latency"}],
+                  ["...", {"stat": "p99", "label": "p99 Latency"}]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "API Gateway - Latency",
+                "period": 300,
+                "yAxis": {"left": {"min": 0}},
+                "annotations": {
+                  "horizontal": [{
+                    "label": "SLO Threshold (1000ms)",
+                    "value": 1000
+                  }]
+                },
+                "dimensions": {
+                  "ApiName": "${AWS::StackName}-api",
+                  "Stage": "${Environment}"
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  [{"expression":
+                  "(m1/m2)*100", "label": "Error Rate %", "id": "e1"}],
+                  ["AWS/Lambda", "Errors",
+                  {"id": "m1", "stat": "Sum", "visible": false}],
+                  [".", "Invocations",
+                  {"id": "m2", "stat": "Sum", "visible": false}]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "SubmitNumber Lambda - Error Rate",
+                "period": 300,
+                "yAxis": {"left": {"min": 0, "max": 5}},
+                "annotations": {
+                  "horizontal": [{
+                    "label": "SLO Threshold (1%)",
+                    "value": 1
+                  }]
+                },
+                "dimensions": {
+                  "FunctionName": "${SubmitNumberFunction}"
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  [{"expression":
+                  "(m1/m2)*100", "label": "Error Rate %", "id": "e1"}],
+                  ["AWS/Lambda", "Errors",
+                  {"id": "m1", "stat": "Sum", "visible": false}],
+                  [".", "Invocations",
+                  {"id": "m2", "stat": "Sum", "visible": false}]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Stats Lambda - Error Rate",
+                "period": 300,
+                "yAxis": {"left": {"min": 0, "max": 5}},
+                "annotations": {
+                  "horizontal": [{
+                    "label": "SLO Threshold (1%)",
+                    "value": 1
+                  }]
+                },
+                "dimensions": {
+                  "FunctionName": "${StatsFunction}"
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  ["AWS/Lambda", "Duration",
+                  {"stat": "Average", "label": "Avg Duration"}],
+                  ["...", {"stat": "Maximum", "label": "Max Duration"}]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Lambda Functions - Duration",
+                "period": 300,
+                "yAxis": {"left": {"min": 0}},
+                "dimensions": {
+                  "FunctionName": "${SubmitNumberFunction}"
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  ["AWS/DynamoDB", "UserErrors",
+                  {"stat": "Sum", "label": "Throttled Requests"}],
+                  [".", "ConsumedReadCapacityUnits",
+                  {"stat": "Sum", "label": "Read Capacity"}],
+                  [".", "ConsumedWriteCapacityUnits",
+                  {"stat": "Sum", "label": "Write Capacity"}]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "DynamoDB - Performance",
+                "period": 300,
+                "yAxis": {"left": {"min": 0}},
+                "annotations": {
+                  "horizontal": [{
+                    "label": "Throttle Threshold (5)",
+                    "value": 5
+                  }]
+                },
+                "dimensions": {
+                  "TableName": "${DataTable}"
+                }
+              }
+            }
+          ]
+        }
 
 Outputs:
   CloudFrontURL:
@@ -607,3 +928,12 @@ Outputs:
   StatsFunctionName:
     Description: Lambda function name for stats function
     Value: !Ref StatsFunction
+
+  SLOAlarmTopicArn:
+    Description: SNS Topic ARN for SLO alarm notifications
+    Value: !Ref SLOAlarmTopic
+
+  SLODashboardURL:
+    Description: CloudWatch Dashboard URL for SLO monitoring
+    Value: !Sub "https://console.aws.amazon.com/cloudwatch/home?\
+      region=${AWS::Region}#dashboards:name=${AWS::StackName}-slo-dashboard"

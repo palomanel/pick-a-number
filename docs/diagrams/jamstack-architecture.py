@@ -8,11 +8,12 @@ from diagrams.aws.storage import S3
 from diagrams.aws.network import APIGateway
 from diagrams.aws.compute import Lambda
 from diagrams.aws.database import Dynamodb
-from diagrams.aws.management import CloudwatchLogs
+from diagrams.aws.management import CloudwatchLogs, CloudwatchAlarm
 from diagrams.aws.devtools import XRay
 from diagrams.aws.management import Cloudformation
 from diagrams.onprem.vcs import Github
 from diagrams.aws.cost import Budgets
+from diagrams.aws.integration import SNS
 
 graph_attr = {
     "layout": "dot",
@@ -28,9 +29,10 @@ with Diagram(
     direction="LR",
 ):
     user = User("User")
+    ops_team = User("Operations\nTeam")
     github = Github("GitHub\nRepository")
 
-    with Cluster("AWS Cloud", graph_attr={"pad": "2"}):
+    with Cluster("AWS Cloud"):
 
         with Cluster("Frontend Layer"):
             cloudfront = CloudFront("CloudFront\nDistribution")
@@ -45,10 +47,12 @@ with Diagram(
             dynamodb = Dynamodb("DynamoDB\nTable")
 
         with Cluster("Management\nLayer"):
+            alarms = CloudwatchAlarm("CloudWatch\nAlarms")
             budget = Budgets("AWS Budget")
             cloudformation = Cloudformation("CloudFormation\nStack")
             cloudwatch = CloudwatchLogs("CloudWatch\nLogs")
             logs = S3("Logs\nS3 Bucket")
+            sns = SNS("SNS Topic\n(SLO Alerts)")
             xray = XRay("X-Ray\nTracing")
 
     user >> cloudfront
@@ -69,12 +73,21 @@ with Diagram(
         >> dynamodb
     )
 
-    api_gateway >> Edge(style="dashed") >> cloudwatch
-    api_gateway >> Edge(style="dashed") >> xray
-    cloudfront >> Edge(style="dashed") >> logs
-    github >> Edge(style="dashed") >> cloudformation
-    s3 >> Edge(style="dashed") >> logs
-    stats_lambda >> Edge(style="dashed") >> cloudwatch
-    stats_lambda >> Edge(style="dashed") >> xray
-    submit_number_lambda >> Edge(style="dashed") >> cloudwatch
-    submit_number_lambda >> Edge(style="dashed") >> xray
+    api_gateway >> Edge(style="dashed", minlen="2") >> cloudwatch
+    api_gateway >> Edge(style="dashed", minlen="2") >> xray
+    cloudfront >> Edge(style="dashed", minlen="2") >> logs
+    github >> Edge(style="dashed", minlen="2") >> cloudformation
+    s3 >> Edge(style="dashed", minlen="2") >> logs
+    stats_lambda >> Edge(style="dashed", minlen="2") >> cloudwatch
+    stats_lambda >> Edge(style="dashed", minlen="2") >> xray
+    submit_number_lambda >> Edge(style="dashed", minlen="2") >> cloudwatch
+    submit_number_lambda >> Edge(style="dashed", minlen="2") >> xray
+    (
+        cloudwatch
+        >> Edge(style="dashed", minlen="2")
+        >> alarms
+        >> Edge(style="dashed", minlen="2")
+        >> sns
+    )
+    sns >> Edge(style="dashed", label="email", minlen="2") >> ops_team
+    budget >> Edge(style="dashed", label="email", minlen="2") >> ops_team
