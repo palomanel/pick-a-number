@@ -23,12 +23,14 @@ All of the components are contained in this repo including:
 
 - **Frontend**, a one page web app using HTML and vanilla JavaScript
 - **Backend**, a data ingestion REST API and persistence layer
-- **Management**, supports several environments, logging for all components,
-  X-ray tracing, Service Level Objectives alarms and dashboard
+- **Management**, supports several environments with independent budget tracking
+  , logging for all components, X-ray tracing, Service Level Objectives alarms
+  and dashboard
 - **Infrastructure-as-Code**, a CloudFormation template that deploys the
-  AWS infrastructure, including an AWS Budget
+  AWS infrastructure, deployment is done through a GitHub action using OIDC
+  trust and following the principle of least privilege, no tokens used
 - **CI/CD and tooling**, a `devcontainer` configuration, `pre-commit`
-  hooks, unit tests, deployment automation using OIDC
+  hooks, unit tests
 
 If you have an [AWS Free Tier](https://aws.amazon.com/free/) account and don't
 exceed resource thresholds your consumption will be **zero**, so this
@@ -117,23 +119,26 @@ cd src/scripts
 ./create_oidc_role.sh
 ```
 
-Note down OIDC role's ARN, you'll need that in the next step.
+Note down the OIDC role's ARN, you'll need that in the next step.
 
 Access your repo settings and add configure the `main`
 [GitHub environment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
 , add the following values:
 
 - environment variables, accessible for workflows under the `vars` context.
-  - `APP_NAME`, optional
-  - `AWS_REGION`, required
-  - `NOTIFY_EMAIL`, required
-  - `ENVIRONMENT`, optional
+  - `APP_NAME`
+  - `AWS_REGION`
+  - `NOTIFY_EMAIL`
+  - `ENVIRONMENT`
 - secrets, accessible for workflows under the `secrets` context.
-  - `AWS_ROLE_ARN`, required
+  - `AWS_ROLE_ARN`
 
 When triggered the `deploy` job will execute `deploy.sh`.
 After successful completion the app will be deployed and the
 application endpoint will added to the GitHub environment.
+
+If you have problems with the deployment make sure all of the parameters
+you provided for the creation of the OIDC role are correct.
 
 ### Using the app
 
